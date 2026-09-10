@@ -1,0 +1,5 @@
+userId,firstName,lastName,username,password,isActive,dateOfBirth,address
+550e8400-e29b-41d4-a716-446655440001,John,Smith,John.Smith,Abc123Xyz9,true,1995-03-15,12 Main Street
+550e8400-e29b-41d4-a716-446655440002,Alice,Brown,Alice.Brown,Xyz789Qwe2,true,1998-07-20,25 Oak Avenue
+550e8400-e29b-41d4-a716-446655440003,Michael,Johnson,Michael.Johnson,Pqr456Lmn8,false,1992-11-03,8 Park Road
+550e8400-e29b-41d4-a716-446655440004,Sarah,Davis,Sarah.Davis,Klm321Rst7,true,1997-01-28,43 Lake Street

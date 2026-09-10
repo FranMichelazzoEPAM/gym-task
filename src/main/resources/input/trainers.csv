@@ -1,0 +1,5 @@
+userId,firstName,lastName,username,password,isActive,specialization
+650e8400-e29b-41d4-a716-446655440001,Robert,Taylor,Robert.Taylor,Bnm456Tyu8,true,Strength Training
+650e8400-e29b-41d4-a716-446655440002,Emma,Wilson,Emma.Wilson,Qwe789Asd1,true,Cardio
+650e8400-e29b-41d4-a716-446655440003,David,Moore,David.Moore,Zxc123Poi4,false,CrossFit
+650e8400-e29b-41d4-a716-446655440004,Laura,Anderson,Laura.Anderson,Lkj987Hgf5,true,Yoga
