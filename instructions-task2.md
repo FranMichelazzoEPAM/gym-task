@@ -48,3 +48,14 @@
 15. Use transaction management to perform actions in a transaction where it necessary.
 16. Configure Hibernate for work with DBMS that you choose.
 17. Cover code with unit tests. Code should contain proper logging.
+
+## Evaluation criteria
+1. All functional tasks have been successfully executed per the requirements, with the application building and running error-free	60 points 
+2. The written code adheres to clean code standards, development best practices such as SOLID, KISS, and DRY, utilizes design patterns, and maintains engineering excellence	10 points 
+3. The code includes comprehensive logging, conforming to the best practices of logging; it includes various log levels, is sufficiently detailed, and does not contain sensitive data	10 points 
+4. The code is covered by unit tests, achieving a line coverage of at least 80%. Additionally, these unit tests adhere to the FIRST principles	10 points 
+5. Criteria specific to the task account for the remaining:
+- Trainee information is accurately deleted using a cascade delete operation.
+- Transactions are defined and used correctly.
+- The relationships between entities are established correctly.
+  10 points
