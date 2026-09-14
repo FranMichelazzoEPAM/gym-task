@@ -12,9 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Service
 public class TraineeServiceImpl implements TraineeService {
@@ -141,7 +143,7 @@ public class TraineeServiceImpl implements TraineeService {
                             LOG.error("Trainer not found: {}", username);
                             return new NoSuchElementException("Trainer with username " + username + " not found.");
                         }))
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
 
         trainee.setTrainers(resolvedTrainers);
         Trainee updated = traineeRepository.save(trainee);
