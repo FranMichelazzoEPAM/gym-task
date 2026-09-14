@@ -4,12 +4,16 @@ import gym.domain.Trainee;
 
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 public interface TraineeService {
     Trainee createTrainee(String firstName, String lastName, Date dateOfBirth, String address);
     Trainee updateTrainee(Trainee trainee);
-    void deleteTrainee(UUID userId);
-    Trainee getTrainee(UUID userId);
+    void deleteTraineeByUsername(String username);
+    Trainee getTraineeByUsername(String username);
     List<Trainee> getAllTrainees();
+
+    boolean authenticate(String username, String password);
+    void changePassword(String username, String oldPassword, String newPassword);
+    void toggleActiveStatus(String username);
+    Trainee updateTraineeTrainersList(String traineeUsername, List<String> trainerUsernames);
 }

@@ -6,11 +6,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-public class TraineeDaoImplTest {
+public class TraineeRepositoryImplTest {
 
     @Test
     public void testFindAllAndSaveAndDelete() {
-        TraineeDaoImpl dao = new TraineeDaoImpl();
+        TraineeRepositoryImpl dao = new TraineeRepositoryImpl();
         Map<UUID, Trainee> storage = new HashMap<>();
         dao.setStorage(storage);
 
@@ -34,7 +34,7 @@ public class TraineeDaoImplTest {
 
     @Test
     public void testFindByIdEmpty() {
-        TraineeDaoImpl dao = new TraineeDaoImpl();
+        TraineeRepositoryImpl dao = new TraineeRepositoryImpl();
         dao.setStorage(new HashMap<>());
         Assertions.assertFalse(dao.findById(UUID.randomUUID()).isPresent());
     }

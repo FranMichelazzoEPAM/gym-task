@@ -1,6 +1,6 @@
 package gym.service.impl;
 
-import gym.dao.TraineeDao;
+import gym.dao.TraineeRepository;
 import gym.domain.Trainee;
 import gym.service.PasswordGenerationService;
 import gym.service.UsernameGenerationService;
@@ -19,7 +19,7 @@ public class TraineeServiceImplTest {
 
     @Test
     public void testCreateTraineeDelegatesAndGeneratesCredentials() {
-        TraineeDao dao = Mockito.mock(TraineeDao.class);
+        TraineeRepository dao = Mockito.mock(TraineeRepository.class);
         // Avoid mocking concrete helper classes that require JVM instrumentation — use small test stubs instead
         UsernameGenerationService usernameSvc = new UsernameGenerationService() {
             @Override
@@ -48,7 +48,7 @@ public class TraineeServiceImplTest {
 
     @Test
     public void testUpdateTraineeWhenNotFoundThrows() {
-        TraineeDao dao = Mockito.mock(TraineeDao.class);
+        TraineeRepository dao = Mockito.mock(TraineeRepository.class);
         when(dao.findById(any())).thenReturn(Optional.empty());
 
         TraineeServiceImpl service = new TraineeServiceImpl();
@@ -60,7 +60,7 @@ public class TraineeServiceImplTest {
 
     @Test
     public void testDeleteTraineeWhenFoundDeletes() {
-        TraineeDao dao = Mockito.mock(TraineeDao.class);
+        TraineeRepository dao = Mockito.mock(TraineeRepository.class);
         UUID id = UUID.randomUUID();
         when(dao.findById(id)).thenReturn(Optional.of(new Trainee("A","B","u","p",true,new Date(),"a", id)));
 

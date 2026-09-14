@@ -1,6 +1,6 @@
 package gym.service;
 
-import gym.dao.TraineeDao;
+import gym.dao.TraineeRepository;
 import gym.dao.TrainerDao;
 import gym.domain.Trainee;
 import gym.domain.Trainer;
@@ -14,7 +14,7 @@ public class UsernameGenerationServiceTest {
     @Test
     public void testGenerateUsernameNoCollision() {
         UsernameGenerationService svc = new UsernameGenerationService();
-        svc.setTraineeDao(new TraineeDao() {
+        svc.setTraineeDao(new TraineeRepository() {
             @Override public Trainee save(Trainee trainee) { return null; }
             @Override public Optional<Trainee> findById(UUID userId) { return Optional.empty(); }
             @Override public List<Trainee> findAll() { return Collections.emptyList(); }
@@ -35,7 +35,7 @@ public class UsernameGenerationServiceTest {
         UsernameGenerationService svc = new UsernameGenerationService();
         Trainee existing = new Trainee("A","B","John.Doe", "pw", true, new Date(), "addr", UUID.randomUUID());
         List<Trainee> trainees = Arrays.asList(existing);
-        svc.setTraineeDao(new TraineeDao() {
+        svc.setTraineeDao(new TraineeRepository() {
             @Override public Trainee save(Trainee trainee) { return null; }
             @Override public Optional<Trainee> findById(UUID userId) { return Optional.empty(); }
             @Override public List<Trainee> findAll() { return trainees; }
