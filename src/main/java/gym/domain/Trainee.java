@@ -1,49 +1,72 @@
 package gym.domain;
 
-import java.util.Date;
-import java.util.UUID;
+import jakarta.persistence.*;
+import java.util.*;
 
-public class Trainee extends User{
+@Entity
+@Table(name = "trainees")
+public class Trainee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, unique = true)
+    private UUID traineeId;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "userId", nullable = false, unique = true)
+    private User user;
+
+    @Temporal(TemporalType.DATE)
+    @Column(nullable = true)
     private Date dateOfBirth;
+
+    @Column(nullable = true)
     private String address;
-    private UUID userId;
 
-    public Trainee(String firstName, String lastName, String username, String password, boolean isActive, Date dateOfBirth, String address, UUID userId) {
-        super(firstName, lastName, username, password, isActive);
+    @ManyToMany
+    @JoinTable(
+            name = "trainee_trainers",
+            joinColumns = @JoinColumn(name = "traineeId"),
+            inverseJoinColumns = @JoinColumn(name = "trainerId")
+    )
+    private List<Trainer> trainers = new ArrayList<>();
+
+    // Note 7: hard delete → cascade to trainings
+    @OneToMany(mappedBy = "trainee", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Training> trainings = new ArrayList<>();
+
+    public Trainee(User user, Date dateOfBirth, String address) {
+        this.user = user;
         this.dateOfBirth = dateOfBirth;
         this.address = address;
-        this.userId = userId;
     }
 
-    public Date getDateOfBirth() {
-        return dateOfBirth;
+    protected Trainee() {
+        // Required by JPA
     }
 
-    public void setDateOfBirth(Date dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
+    public UUID getTraineeId() { return traineeId; }
 
-    public String getAddress() {
-        return address;
-    }
+    public User getUser() { return user; }
 
-    public void setAddress(String address) {
-        this.address = address;
-    }
+    public void setUser(User user) { this.user = user; }
 
-    public UUID getUserId() {
-        return userId;
-    }
+    public Date getDateOfBirth() { return dateOfBirth; }
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
+    public void setDateOfBirth(Date dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+
+    public String getAddress() { return address; }
+
+    public void setAddress(String address) { this.address = address; }
+
+    public List<Trainer> getTrainers() { return trainers; }
+
+    public void setTrainers(List<Trainer> trainers) { this.trainers = trainers; }
+
+    public List<Training> getTrainings() { return trainings; }
 
     public String toString() {
-        return
-                super.toString() +
-                ", dateOfBirth=" + dateOfBirth +
-                ", address='" + address + '\'' +
-                ", userId=" + userId;
+        return "traineeId=" + traineeId + ", user=" + user +
+                ", dateOfBirth=" + dateOfBirth + ", address='" + address + '\'';
     }
 }

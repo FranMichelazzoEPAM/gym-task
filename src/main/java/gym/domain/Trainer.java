@@ -1,37 +1,58 @@
 package gym.domain;
 
-import java.util.UUID;
+import jakarta.persistence.*;
+import java.util.*;
 
-public class Trainer extends User {
-    private UUID userId;
-    private String specialization;
+@Entity
+@Table(name = "trainers")
+public class Trainer {
 
-    public Trainer(String firstName, String lastName, String username, String password, boolean isActive, UUID userId, String specialization) {
-        super(firstName, lastName, username, password, isActive);
-        this.userId = userId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, unique = true)
+    private UUID trainerId;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "userId", nullable = false, unique = true)
+    private User user;
+
+    @ManyToMany
+    @JoinTable(
+            name = "trainer_specializations",
+            joinColumns = @JoinColumn(name = "trainerId"),
+            inverseJoinColumns = @JoinColumn(name = "trainingTypeId")
+    )
+    private List<TrainingType> specialization = new ArrayList<>();
+
+    @ManyToMany(mappedBy = "trainers")
+    private List<Trainee> trainees = new ArrayList<>();
+
+    @OneToMany(mappedBy = "trainer")
+    private List<Training> trainings = new ArrayList<>();
+
+    public Trainer(User user, List<TrainingType> specialization) {
+        this.user = user;
         this.specialization = specialization;
     }
 
-    public UUID getUserId() {
-        return userId;
-    }
+    protected Trainer() {}
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
+    public UUID getTrainerId() { return trainerId; }
 
-    public String getSpecialization() {
-        return specialization;
-    }
+    public User getUser() { return user; }
 
-    public void setSpecialization(String specialization) {
-        this.specialization = specialization;
-    }
+    public void setUser(User user) { this.user = user; }
+
+    public List<TrainingType> getSpecialization() { return specialization; }
+
+    public void setSpecialization(List<TrainingType> specialization) { this.specialization = specialization; }
+
+    public List<Trainee> getTrainees() { return trainees; }
+
+    public List<Training> getTrainings() { return trainings; }
 
     public String toString() {
-        return
-                super.toString() +
-                ", userId=" + userId +
+        return "trainerId=" + trainerId + ", user=" + user +
                 ", specialization=" + specialization;
     }
 }

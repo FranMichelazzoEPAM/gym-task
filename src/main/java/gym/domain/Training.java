@@ -1,90 +1,83 @@
 package gym.domain;
 
-import java.time.Duration;
+import jakarta.persistence.*;
 import java.util.Date;
 import java.util.UUID;
 
+@Entity
+@Table(name = "trainings")
 public class Training {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, unique = true)
     private UUID trainingId;
-    private UUID traineeId;
-    private UUID trainerId;
+
+    @ManyToOne
+    @JoinColumn(name = "traineeId", nullable = false)
+    private Trainee trainee;
+
+    @ManyToOne
+    @JoinColumn(name = "trainerId", nullable = false)
+    private Trainer trainer;
+
+    @Column(nullable = false)
     private String trainingName;
+
+    @ManyToOne
+    @JoinColumn(name = "trainingTypeId", nullable = false)
     private TrainingType trainingType;
+
+    @Temporal(TemporalType.DATE)
+    @Column(nullable = false)
     private Date trainingDate;
-    private Duration trainingDuration;
 
-    public Training(UUID trainingId, UUID traineeId, UUID trainerId, String trainingName, TrainingType trainingType, Date trainingDate, Duration trainingDuration) {
-        this.trainingId = trainingId;
-        this.traineeId = traineeId;
-        this.trainerId = trainerId;
+    @Column(nullable = false)
+    private int trainingDuration; // duration in minutes
+
+    public Training(Trainee trainee, Trainer trainer, String trainingName,
+                    TrainingType trainingType, Date trainingDate, int trainingDuration) {
+        this.trainee = trainee;
+        this.trainer = trainer;
         this.trainingName = trainingName;
         this.trainingType = trainingType;
         this.trainingDate = trainingDate;
         this.trainingDuration = trainingDuration;
     }
 
-    public UUID getTrainingId() {
-        return trainingId;
+    protected Training() {
+        // Required by JPA
     }
 
-    public void setTrainingId(UUID trainingId) {this.trainingId = trainingId;}
+    public UUID getTrainingId() { return trainingId; }
 
-    public UUID getTraineeId() {
-        return traineeId;
-    }
+    public Trainee getTrainee() { return trainee; }
 
-    public void setTraineeId(UUID traineeId) {
-        this.traineeId = traineeId;
-    }
+    public void setTrainee(Trainee trainee) { this.trainee = trainee; }
 
-    public UUID getTrainerId() {
-        return trainerId;
-    }
+    public Trainer getTrainer() { return trainer; }
 
-    public void setTrainerId(UUID trainerId) {
-        this.trainerId = trainerId;
-    }
+    public void setTrainer(Trainer trainer) { this.trainer = trainer; }
 
-    public String getTrainingName() {
-        return trainingName;
-    }
+    public String getTrainingName() { return trainingName; }
 
-    public void setTrainingName(String trainingName) {
-        this.trainingName = trainingName;
-    }
+    public void setTrainingName(String trainingName) { this.trainingName = trainingName; }
 
-    public TrainingType getTrainingType() {
-        return trainingType;
-    }
+    public TrainingType getTrainingType() { return trainingType; }
 
-    public void setTrainingType(TrainingType trainingType) {
-        this.trainingType = trainingType;
-    }
+    public void setTrainingType(TrainingType trainingType) { this.trainingType = trainingType; }
 
-    public Date getTrainingDate() {
-        return trainingDate;
-    }
+    public Date getTrainingDate() { return trainingDate; }
 
-    public void setTrainingDate(Date trainingDate) {
-        this.trainingDate = trainingDate;
-    }
+    public void setTrainingDate(Date trainingDate) { this.trainingDate = trainingDate; }
 
-    public Duration getTrainingDuration() {
-        return trainingDuration;
-    }
+    public int getTrainingDuration() { return trainingDuration; }
 
-    public void setTrainingDuration(Duration trainingDuration) {
-        this.trainingDuration = trainingDuration;
-    }
+    public void setTrainingDuration(int trainingDuration) { this.trainingDuration = trainingDuration; }
 
     public String toString() {
-        return
-                "trainingId=" + trainingId +
-                ", traineeId=" + traineeId +
-                ", trainerId=" + trainerId +
-                ", trainingName='" + trainingName + '\'' +
-                ", trainingType='" + trainingType + '\'' +
-                ", trainingDate=" + trainingDate +
-                ", trainingDuration=" + trainingDuration;
+        return "trainingId=" + trainingId + ", trainee=" + trainee + ", trainer=" + trainer +
+                ", trainingName='" + trainingName + '\'' + ", trainingType=" + trainingType +
+                ", trainingDate=" + trainingDate + ", trainingDuration=" + trainingDuration;
     }
 }
