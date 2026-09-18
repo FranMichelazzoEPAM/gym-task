@@ -9,6 +9,7 @@ import gym.security.RequiresAuthentication;
 import gym.service.TraineeService;
 import gym.service.TrainerService;
 import gym.service.TrainingService;
+import gym.service.TrainingTypeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,14 +25,17 @@ public class GymFacadeImpl implements GymFacade {
     private final TraineeService traineeService;
     private final TrainerService trainerService;
     private final TrainingService trainingService;
+    private final TrainingTypeService trainingTypeService;
 
     @Autowired
     public GymFacadeImpl(TraineeService traineeService,
                          TrainerService trainerService,
-                         TrainingService trainingService) {
+                         TrainingService trainingService,
+                         TrainingTypeService trainingTypeService) {
         this.traineeService = traineeService;
         this.trainerService = trainerService;
         this.trainingService = trainingService;
+        this.trainingTypeService = trainingTypeService;
         LOG.info("GymFacadeImpl initialized");
     }
 
@@ -198,5 +202,18 @@ public class GymFacadeImpl implements GymFacade {
                                               String traineeName) {
         LOG.debug("Facade getTrainerTrainings {}", trainerUsername);
         return trainingService.getTrainerTrainings(trainerUsername, fromDate, toDate, traineeName);
+    }
+
+    // ===== TrainingTypes =====
+    @Override
+    public List<TrainingType> getAllTrainingTypes() {
+        LOG.debug("Facade getAllTrainingTypes");
+        return trainingTypeService.getAllTrainingTypes();
+    }
+
+    @Override
+    public TrainingType getTrainingTypeByName(String name) {
+        LOG.debug("Facade getTrainingTypeByName {}", name);
+        return trainingTypeService.getTrainingTypeByName(name);
     }
 }

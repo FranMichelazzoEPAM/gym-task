@@ -45,4 +45,8 @@ public interface GymFacade {
     List<Training> getTrainerTrainings(String callerUsername, String callerPassword,
                                        String trainerUsername, Date fromDate, Date toDate,
                                        String traineeName);
+
+    // TrainingTypes
+    List<TrainingType> getAllTrainingTypes();
+    TrainingType getTrainingTypeByName(String name);
 }
