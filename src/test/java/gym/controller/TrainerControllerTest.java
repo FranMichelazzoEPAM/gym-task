@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -107,5 +108,19 @@ class TrainerControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void registerTrainer_withNonexistentSpecialization_returns404() throws Exception {
+        when(gymFacade.getTrainingTypeByName("Nonexistent"))
+                .thenThrow(new NoSuchElementException("Training type 'Nonexistent' not found."));
+
+        String json = "{\"firstName\":\"Fran\",\"lastName\":\"Miche\",\"specializations\":[\"Nonexistent\"]}";
+
+        mockMvc.perform(post("/api/trainers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
     }
 }
