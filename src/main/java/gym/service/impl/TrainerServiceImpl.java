@@ -108,22 +108,6 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Transactional
-    public void changePassword(String username, String oldPassword, String newPassword) {
-        LOG.debug("Changing password for trainer: {}", username);
-        Trainer trainer = findTrainerOrThrow(username);
-
-        if (!trainer.getUser().getPassword().equals(oldPassword)) {
-            LOG.error("Password change failed: old password mismatch for {}", username);
-            throw new IllegalArgumentException("Old password does not match.");
-        }
-
-        trainer.getUser().setPassword(newPassword);
-        trainerRepository.save(trainer);
-        LOG.info("Password changed for trainer: {}", username);
-    }
-
-    @Override
-    @Transactional
     public void toggleActiveStatus(String username) {
         LOG.debug("Toggling active status for trainer: {}", username);
         Trainer trainer = findTrainerOrThrow(username);

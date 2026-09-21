@@ -6,10 +6,7 @@ import gym.domain.Training;
 import gym.domain.TrainingType;
 import gym.facade.GymFacade;
 import gym.security.RequiresAuthentication;
-import gym.service.TraineeService;
-import gym.service.TrainerService;
-import gym.service.TrainingService;
-import gym.service.TrainingTypeService;
+import gym.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,17 +23,27 @@ public class GymFacadeImpl implements GymFacade {
     private final TrainerService trainerService;
     private final TrainingService trainingService;
     private final TrainingTypeService trainingTypeService;
+    private final UserService userService;
 
     @Autowired
     public GymFacadeImpl(TraineeService traineeService,
                          TrainerService trainerService,
                          TrainingService trainingService,
-                         TrainingTypeService trainingTypeService) {
+                         TrainingTypeService trainingTypeService,
+                         UserService userService) {
         this.traineeService = traineeService;
         this.trainerService = trainerService;
         this.trainingService = trainingService;
         this.trainingTypeService = trainingTypeService;
+        this.userService = userService;
         LOG.info("GymFacadeImpl initialized");
+    }
+
+    // ===== Users =====
+    @Override
+    public void changePassword(String username, String oldPassword, String newPassword) {
+        LOG.debug("Facade changePassword for {}", username);
+        userService.changePassword(username, oldPassword, newPassword);
     }
 
     // ===== Trainees =====
@@ -79,13 +86,6 @@ public class GymFacadeImpl implements GymFacade {
     public boolean authenticateTrainee(String username, String password) {
         LOG.debug("Facade authenticateTrainee {}", username);
         return traineeService.authenticate(username, password);
-    }
-
-    @RequiresAuthentication
-    @Override
-    public void changeTraineePassword(String username, String oldPassword, String newPassword) {
-        LOG.debug("Facade changeTraineePassword {}", username);
-        traineeService.changePassword(username, oldPassword, newPassword);
     }
 
     @RequiresAuthentication
@@ -136,13 +136,6 @@ public class GymFacadeImpl implements GymFacade {
     public boolean authenticateTrainer(String username, String password) {
         LOG.debug("Facade authenticateTrainer {}", username);
         return trainerService.authenticate(username, password);
-    }
-
-    @RequiresAuthentication
-    @Override
-    public void changeTrainerPassword(String username, String oldPassword, String newPassword) {
-        LOG.debug("Facade changeTrainerPassword {}", username);
-        trainerService.changePassword(username, oldPassword, newPassword);
     }
 
     @RequiresAuthentication

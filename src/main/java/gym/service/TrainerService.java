@@ -12,7 +12,6 @@ public interface TrainerService {
     List<Trainer> getAllTrainers();
 
     boolean authenticate(String username, String password);
-    void changePassword(String username, String oldPassword, String newPassword);
     void toggleActiveStatus(String username);
     List<Trainer> getTrainersNotAssignedToTrainee(String traineeUsername);
 }

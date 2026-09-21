@@ -11,6 +11,9 @@ import java.util.UUID;
 
 public interface GymFacade {
 
+    // Users
+    void changePassword(String username, String oldPassword, String newPassword);
+
     // Trainees
     Trainee createTrainee(String firstName, String lastName, Date dateOfBirth, String address);
     Trainee updateTrainee(String callerUsername, String callerPassword, Trainee trainee);
@@ -18,7 +21,6 @@ public interface GymFacade {
     Trainee getTrainee(String callerUsername, String callerPassword, String username);
     List<Trainee> getAllTrainees(String callerUsername, String callerPassword);
     boolean authenticateTrainee(String username, String password);
-    void changeTraineePassword(String username, String oldPassword, String newPassword);
     void toggleTraineeActiveStatus(String callerUsername, String callerPassword, String username);
     Trainee updateTraineeTrainersList(String callerUsername, String callerPassword,
                                       String traineeUsername, List<String> trainerUsernames);
@@ -29,7 +31,6 @@ public interface GymFacade {
     Trainer getTrainer(String callerUsername, String callerPassword, String username);
     List<Trainer> getAllTrainers(String callerUsername, String callerPassword);
     boolean authenticateTrainer(String username, String password);
-    void changeTrainerPassword(String username, String oldPassword, String newPassword);
     void toggleTrainerActiveStatus(String callerUsername, String callerPassword, String username);
     List<Trainer> getTrainersNotAssignedToTrainee(String callerUsername, String callerPassword, String traineeUsername);
 

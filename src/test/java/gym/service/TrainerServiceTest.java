@@ -6,6 +6,7 @@ import gym.domain.User;
 import gym.repository.TrainerRepository;
 import gym.repository.TrainingTypeRepository;
 import gym.service.impl.TrainerServiceImpl;
+import gym.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,8 @@ class TrainerServiceTest {
     private PasswordGenerationService passwordGenerationService;
 
     private TrainerServiceImpl trainerService;
+
+    private UserServiceImpl userService;
 
     private TrainingType managedType;
 
@@ -83,30 +86,6 @@ class TrainerServiceTest {
 
         boolean ok = trainerService.authenticate("user", "secret");
         assertThat(ok).isTrue();
-    }
-
-    @Test
-    @DisplayName("changePassword succeeds when old password matches")
-    void changePasswordSucceeds() {
-        User u = new User("F","L","user","old", true);
-        Trainer t = new Trainer(u, List.of());
-        when(trainerRepository.findByUser_Username("user")).thenReturn(Optional.of(t));
-        when(trainerRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        trainerService.changePassword("user", "old", "newp");
-
-        assertThat(t.getUser().getPassword()).isEqualTo("newp");
-        verify(trainerRepository).save(t);
-    }
-
-    @Test
-    @DisplayName("changePassword fails when old password mismatch")
-    void changePasswordFails() {
-        User u = new User("F","L","user","old", true);
-        Trainer t = new Trainer(u, List.of());
-        when(trainerRepository.findByUser_Username("user")).thenReturn(Optional.of(t));
-
-        assertThrows(IllegalArgumentException.class, () -> trainerService.changePassword("user", "wrong", "newp"));
     }
 
     @Test

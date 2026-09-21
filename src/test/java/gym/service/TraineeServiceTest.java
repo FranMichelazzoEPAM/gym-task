@@ -6,6 +6,7 @@ import gym.domain.User;
 import gym.repository.TraineeRepository;
 import gym.repository.TrainerRepository;
 import gym.service.impl.TraineeServiceImpl;
+import gym.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ class TraineeServiceTest {
     private PasswordGenerationService passwordGenerationService;
 
     private TraineeServiceImpl traineeService;
+    private UserServiceImpl userService;
 
     @BeforeEach
     void setUp() {
@@ -60,16 +62,6 @@ class TraineeServiceTest {
         when(traineeRepository.findByUser_Username("x")).thenReturn(Optional.empty());
         boolean ok = traineeService.authenticate("x", "p");
         assertThat(ok).isFalse();
-    }
-
-    @Test
-    @DisplayName("changePassword throws when old mismatch")
-    void changePasswordThrows() {
-        User u = new User("F","L","user","old", true);
-        Trainee tr = new Trainee(u, null, null);
-        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(tr));
-
-        assertThrows(IllegalArgumentException.class, () -> traineeService.changePassword("user", "bad", "newp"));
     }
 
     @Test
