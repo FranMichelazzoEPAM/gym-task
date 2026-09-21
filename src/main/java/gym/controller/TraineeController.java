@@ -5,16 +5,14 @@ import gym.dto.request.TraineeRegistrationRequest;
 import gym.dto.response.CredentialsResponse;
 import gym.facade.GymFacade;
 import gym.mapper.TraineeMapper;
+import gym.security.Credentials;
 import io.swagger.v3.oas.annotations.Operation;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
 
@@ -48,4 +46,16 @@ public class TraineeController {
         CredentialsResponse response = TraineeMapper.toCredentialsResponse(createdTrainee);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    // Delete Trainee
+    @DeleteMapping("/{username}")
+    @Operation(summary = "Delete a Trainee", description = "Deletes a trainee by username using the caller's basic auth credentials")
+    @ApiResponse(responseCode = "204", description = "Trainee deleted successfully")
+    @ApiResponse(responseCode = "401", description = "Invalid or missing credentials")
+    @ApiResponse(responseCode = "404", description = "Trainee not found")
+    public ResponseEntity<Void> deleteTrainee(@PathVariable String username, Credentials caller) {
+        gymFacade.deleteTrainee(caller.username(), caller.password(), username);
+        return ResponseEntity.noContent().build();
+    }
+    
 }
