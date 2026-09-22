@@ -106,7 +106,7 @@ public class GymFacadeImpl implements GymFacade {
     // ===== Trainers =====
 
     @Override
-    public Trainer createTrainer(String firstName, String lastName, List<TrainingType> specialization) {
+    public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         LOG.debug("Facade createTrainer {} {}", firstName, lastName);
         return trainerService.createTrainer(firstName, lastName, specialization);
     }

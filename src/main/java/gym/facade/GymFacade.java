@@ -26,7 +26,7 @@ public interface GymFacade {
                                       String traineeUsername, List<String> trainerUsernames);
 
     // Trainers
-    Trainer createTrainer(String firstName, String lastName, List<TrainingType> specialization);
+    Trainer createTrainer(String firstName, String lastName, TrainingType specialization);
     Trainer updateTrainer(String callerUsername, String callerPassword, Trainer trainer);
     Trainer getTrainer(String callerUsername, String callerPassword, String username);
     List<Trainer> getAllTrainers(String callerUsername, String callerPassword);
