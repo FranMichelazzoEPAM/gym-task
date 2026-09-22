@@ -14,7 +14,7 @@ public interface TrainerRepository extends JpaRepository<Trainer, UUID> {
     @Query("SELECT t FROM Trainer t LEFT JOIN FETCH t.specialization WHERE t.user.username = :username")
     Optional<Trainer> findByUser_Username(@Param("username") String username);
 
-    @Query("SELECT DISTINCT t FROM Trainer t LEFT JOIN FETCH t.specialization")
+    @Query("SELECT t FROM Trainer t LEFT JOIN FETCH t.specialization")
     List<Trainer> findAll(); // override base method — same fix for getAllTrainers()
 
     @Query("SELECT tr FROM Trainer tr WHERE tr NOT IN " +
