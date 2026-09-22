@@ -6,7 +6,7 @@ import gym.domain.TrainingType;
 import java.util.List;
 
 public interface TrainerService {
-    Trainer createTrainer(String firstName, String lastName, List<TrainingType> specialization);
+    Trainer createTrainer(String firstName, String lastName, TrainingType specialization);
     Trainer updateTrainer(Trainer trainer);
     Trainer getTrainerByUsername(String username);
     List<Trainer> getAllTrainers();

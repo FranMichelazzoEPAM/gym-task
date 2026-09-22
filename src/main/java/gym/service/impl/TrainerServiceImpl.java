@@ -39,27 +39,26 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Transactional
-    public Trainer createTrainer(String firstName, String lastName, List<TrainingType> specialization) {
+    public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         LOG.debug("Creating trainer: {} {}", firstName, lastName);
 
-        if (specialization == null || specialization.isEmpty()) {
+        if (specialization == null) {
             LOG.error("Trainer creation failed: no specialization provided for {} {}", firstName, lastName);
-            throw new IllegalArgumentException("Trainer must have at least one specialization.");
+            throw new IllegalArgumentException("Trainer specialization is required.");
         }
 
-        List<TrainingType> managedTypes = specialization.stream()
-                .map(t -> trainingTypeRepository.findById(t.getId())
-                        .orElseThrow(() -> {
-                            LOG.error("Unknown training type id: {}", t.getId());
-                            return new NoSuchElementException("Training type not found: " + t.getId());
-                        }))
-                .toList();
+        TrainingType managedType = trainingTypeRepository.findById(specialization.getId())
+                .orElseThrow(() -> {
+                    LOG.error("Unknown training type id: {}", specialization.getId());
+                    return new NoSuchElementException(
+                            "Training type not found: " + specialization.getId());
+                });
 
         String username = usernameGenerationService.generateUsername(firstName, lastName);
         String password = passwordGenerationService.generateRandomPassword();
         User user = new User(firstName, lastName, username, password, true);
 
-        Trainer trainer = new Trainer(user, managedTypes);
+        Trainer trainer = new Trainer(user, managedType);
         trainerRepository.save(trainer);
         LOG.info("Created trainer: {} (id={})", username, trainer.getTrainerId());
 
