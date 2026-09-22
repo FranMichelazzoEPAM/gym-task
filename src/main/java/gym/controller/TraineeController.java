@@ -1,6 +1,7 @@
 package gym.controller;
 
 import gym.domain.Trainee;
+import gym.dto.request.ToggleStatusTraineeRequest;
 import gym.dto.request.TraineeRegistrationRequest;
 import gym.dto.response.CredentialsResponse;
 import gym.facade.GymFacade;
@@ -57,5 +58,24 @@ public class TraineeController {
         gymFacade.deleteTrainee(caller.username(), caller.password(), username);
         return ResponseEntity.noContent().build();
     }
-    
+
+    // Activate/De-Activate Trainee
+    @PatchMapping("/status")
+    @Operation(summary = "Toggle Trainee status", description = "Changes the status of the Trainee to the given one")
+    @ApiResponse(responseCode = "200", description = "Trainee's active status updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request")
+    @ApiResponse(responseCode = "401", description = "Invalid or missing credentials")
+    @ApiResponse(responseCode = "404", description = "Trainee not found")
+    public ResponseEntity<Void> updateTraineeStatus(
+            @Valid @RequestBody ToggleStatusTraineeRequest request,
+            Credentials caller) {
+
+        gymFacade.updateTraineeActiveStatus(caller.username(),
+                caller.password(),
+                request.getUsername(),
+                request.getActive());
+
+        return ResponseEntity.ok().build();
+    }
+
 }

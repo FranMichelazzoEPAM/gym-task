@@ -90,4 +90,64 @@ class TraineeServiceTest {
 
         assertThrows(NoSuchElementException.class, () -> traineeService.updateTraineeTrainersList("user", List.of("missing")));
     }
+
+    @Test
+    @DisplayName("updateActiveStatus deactivates an active trainee")
+    void updateActiveStatus_deactivatesActiveTrainee() {
+        User user = new User("Maxi", "Miliano", "Maxi.Miliano", "password", true);
+        Trainee trainee = new Trainee(user, null, null);
+
+        when(traineeRepository.findByUser_Username("Maxi.Miliano"))
+                .thenReturn(Optional.of(trainee));
+        when(traineeRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        traineeService.updateActiveStatus("Maxi.Miliano", false);
+
+        assertThat(trainee.getUser().isActive()).isFalse();
+        verify(traineeRepository).save(trainee);
+    }
+
+    @Test
+    @DisplayName("updateActiveStatus activates an inactive trainee")
+    void updateActiveStatus_activatesInactiveTrainee() {
+        User user = new User("Maxi", "Miliano", "Maxi.Miliano", "password", false);
+        Trainee trainee = new Trainee(user, null, null);
+
+        when(traineeRepository.findByUser_Username("Maxi.Miliano"))
+                .thenReturn(Optional.of(trainee));
+        when(traineeRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        traineeService.updateActiveStatus("Maxi.Miliano", true);
+
+        assertThat(trainee.getUser().isActive()).isTrue();
+        verify(traineeRepository).save(trainee);
+    }
+
+    @Test
+    @DisplayName("updateActiveStatus does not toggle when the requested status is already set")
+    void updateActiveStatus_keepsExistingStatus() {
+        User user = new User("Maxi", "Miliano", "Maxi.Miliano", "password", true);
+        Trainee trainee = new Trainee(user, null, null);
+
+        when(traineeRepository.findByUser_Username("Maxi.Miliano"))
+                .thenReturn(Optional.of(trainee));
+        when(traineeRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        traineeService.updateActiveStatus("Maxi.Miliano", true);
+
+        assertThat(trainee.getUser().isActive()).isTrue();
+        verify(traineeRepository).save(trainee);
+    }
+
+    @Test
+    @DisplayName("updateActiveStatus throws when trainee does not exist")
+    void updateActiveStatus_throwsWhenTraineeDoesNotExist() {
+        when(traineeRepository.findByUser_Username("missing"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NoSuchElementException.class,
+                () -> traineeService.updateActiveStatus("missing", true)
+        );
+    }
 }

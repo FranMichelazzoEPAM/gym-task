@@ -22,6 +22,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import static org.mockito.Mockito.never;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
 @WebMvcTest(TraineeController.class)
 class TraineeControllerTest {
 
@@ -95,5 +102,158 @@ class TraineeControllerTest {
     void deleteTrainee_withoutCredentials_returns401() throws Exception {
         mockMvc.perform(delete("/api/trainees/john.doe"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateTraineeStatus_withActiveTrue_returns200() throws Exception {
+        String request = """
+            {
+                "username": "Maxi.Miliano",
+                "active": true
+            }
+            """;
+
+        mockMvc.perform(patch("/api/trainees/status")
+                        .header("Authorization", basicAuthHeader("admin", "adminPassword"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isOk());
+
+        verify(gymFacade).updateTraineeActiveStatus(
+                "admin",
+                "adminPassword",
+                "Maxi.Miliano",
+                true
+        );
+    }
+
+    @Test
+    void updateTraineeStatus_withActiveFalse_returns200() throws Exception {
+        String request = """
+            {
+                "username": "Maxi.Miliano",
+                "active": false
+            }
+            """;
+
+        mockMvc.perform(patch("/api/trainees/status")
+                        .header("Authorization", basicAuthHeader("admin", "adminPassword"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isOk());
+
+        verify(gymFacade).updateTraineeActiveStatus(
+                "admin",
+                "adminPassword",
+                "Maxi.Miliano",
+                false
+        );
+    }
+
+    @Test
+    void updateTraineeStatus_withoutCredentials_returns401() throws Exception {
+        String request = """
+            {
+                "username": "Maxi.Miliano",
+                "active": true
+            }
+            """;
+
+        mockMvc.perform(patch("/api/trainees/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(gymFacade);
+    }
+
+    @Test
+    void updateTraineeStatus_withMissingUsername_returns400() throws Exception {
+        String request = """
+            {
+                "active": true
+            }
+            """;
+
+        mockMvc.perform(patch("/api/trainees/status")
+                        .header("Authorization", basicAuthHeader("admin", "adminPassword"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(gymFacade);
+    }
+
+    @Test
+    void updateTraineeStatus_withBlankUsername_returns400() throws Exception {
+        String request = """
+            {
+                "username": "   ",
+                "active": true
+            }
+            """;
+
+        mockMvc.perform(patch("/api/trainees/status")
+                        .header("Authorization", basicAuthHeader("admin", "adminPassword"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(gymFacade);
+    }
+
+    @Test
+    void updateTraineeStatus_withMissingActive_returns400() throws Exception {
+        String request = """
+            {
+                "username": "Maxi.Miliano"
+            }
+            """;
+
+        mockMvc.perform(patch("/api/trainees/status")
+                        .header("Authorization", basicAuthHeader("admin", "adminPassword"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(gymFacade);
+    }
+
+    @Test
+    void updateTraineeStatus_withNullActive_returns400() throws Exception {
+        String request = """
+            {
+                "username": "Maxi.Miliano",
+                "active": null
+            }
+            """;
+
+        mockMvc.perform(patch("/api/trainees/status")
+                        .header("Authorization", basicAuthHeader("admin", "adminPassword"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(gymFacade);
+    }
+
+    @Test
+    void updateTraineeStatus_withMalformedBoolean_returns400() throws Exception {
+        String request = """
+            {
+                "username": "Maxi.Miliano",
+                "active": fale
+            }
+            """;
+
+        mockMvc.perform(patch("/api/trainees/status")
+                        .header("Authorization", basicAuthHeader("admin", "adminPassword"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Malformed request body"));
+
+        verifyNoInteractions(gymFacade);
     }
 }

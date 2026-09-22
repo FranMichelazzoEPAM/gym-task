@@ -13,6 +13,6 @@ public interface TraineeService {
     List<Trainee> getAllTrainees();
 
     boolean authenticate(String username, String password);
-    void toggleActiveStatus(String username);
+    void updateActiveStatus(String username, boolean active);
     Trainee updateTraineeTrainersList(String traineeUsername, List<String> trainerUsernames);
 }

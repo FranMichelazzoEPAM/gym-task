@@ -107,12 +107,16 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional
-    public void toggleActiveStatus(String username) {
-        LOG.debug("Toggling active status for trainee: {}", username);
+    public void updateActiveStatus(String username, boolean active) {
+        LOG.debug("Updating active status for trainee: {}", username);
         Trainee trainee = findTraineeOrThrow(username);
-        trainee.getUser().toggleActive();
+
+        if (trainee.getUser().isActive() != active) {
+            trainee.getUser().toggleActive();
+        }
+
         traineeRepository.save(trainee);
-        LOG.info("Trainee {} active status is now {}", username, trainee.getUser().isActive());
+        LOG.info("Trainee {} active status is now {}", username, active);
     }
 
     @Override
