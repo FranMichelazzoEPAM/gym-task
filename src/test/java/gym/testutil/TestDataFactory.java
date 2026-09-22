@@ -4,8 +4,6 @@ import gym.domain.*;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.UUID;
 
 public final class TestDataFactory {
 
@@ -17,8 +15,8 @@ public final class TestDataFactory {
     }
 
     public static Trainer trainer(String firstName, String lastName, String username, String password, boolean active) {
-        User u = user(firstName, lastName, username, password, active);
-        return new Trainer(u, new ArrayList<>());
+        User user = user(firstName, lastName, username, password, active);
+        return new Trainer(user, null);
     }
 
     public static Trainee trainee(String firstName, String lastName, String username, String password, boolean active) {

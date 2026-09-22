@@ -4,8 +4,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Date;
-import java.util.List;
-import java.util.UUID;
 
 public class DomainObjectsTest {
 
@@ -38,9 +36,10 @@ public class DomainObjectsTest {
 
     @Test
     public void testTrainerGettersAndToString() {
-        Trainer tr = new Trainer(new User("TrFirst","TrLast","truser","trpw",true), List.of());
+        TrainingType specialization = new TrainingType("cardio");
+        Trainer tr = new Trainer(new User("TrFirst","TrLast","truser","trpw",true), specialization);
         Assertions.assertEquals("truser", tr.getUser().getUsername());
-        // specialization list empty in this test
+        Assertions.assertEquals(specialization, tr.getSpecialization());
         String s = tr.toString();
         Assertions.assertTrue(s.contains("TrFirst"));
         Assertions.assertTrue(s.contains("truser"));
@@ -51,7 +50,7 @@ public class DomainObjectsTest {
         Date date = new Date(2000L);
         TrainingType type = new TrainingType("cardio");
         Trainee trainee = new Trainee(new User("A","B","tuser","p",true), null, null);
-        Trainer trainer = new Trainer(new User("C","D","truser","p",true), List.of());
+        Trainer trainer = new Trainer(new User("C","D","truser","p",true), type);
         Training tr = new Training(trainee, trainer, "Run", type, date, 30);
         Assertions.assertEquals("Run", tr.getTrainingName());
         Assertions.assertEquals(type, tr.getTrainingType());

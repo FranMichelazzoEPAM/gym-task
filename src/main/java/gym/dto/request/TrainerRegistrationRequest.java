@@ -1,6 +1,7 @@
 package gym.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 public class TrainerRegistrationRequest {
     @NotBlank(message = "First name is required")
@@ -10,6 +11,7 @@ public class TrainerRegistrationRequest {
     private String lastName;
 
     @NotBlank(message = "Specialization is required")
+    @JsonDeserialize(using = StrictStringDeserializer.class)
     private String specialization;
 
     public TrainerRegistrationRequest() {

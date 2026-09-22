@@ -64,7 +64,7 @@ class TrainerServiceTest {
         ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
         when(trainerRepository.save(captor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Trainer result = trainerService.createTrainer("John", "Doe", List.of(new TrainingType("x")));
+        Trainer result = trainerService.createTrainer("John", "Doe", managedType);
 
         assertThat(result.getUser().getUsername()).isEqualTo("jdoe");
         assertThat(result.getUser().getPassword()).isEqualTo("pwd");
@@ -72,16 +72,16 @@ class TrainerServiceTest {
     }
 
     @Test
-    @DisplayName("createTrainer fails when specialization empty")
-    void createTrainerFailsOnEmptySpecialization() {
-        assertThrows(IllegalArgumentException.class, () -> trainerService.createTrainer("A","B", List.of()));
+    @DisplayName("createTrainer fails when specialization is missing")
+    void createTrainerFailsOnMissingSpecialization() {
+        assertThrows(IllegalArgumentException.class, () -> trainerService.createTrainer("A","B", null));
     }
 
     @Test
     @DisplayName("authenticate returns true when password matches")
     void authenticateTrue() {
         User u = new User("F","L","user","secret", true);
-        Trainer t = new Trainer(u, List.of());
+        Trainer t = new Trainer(u, managedType);
         when(trainerRepository.findByUser_Username("user")).thenReturn(Optional.of(t));
 
         boolean ok = trainerService.authenticate("user", "secret");
@@ -92,7 +92,7 @@ class TrainerServiceTest {
     @DisplayName("updateActiveStatus deactivates an active trainer")
     void updateActiveStatus() {
         User user = new User("F", "L", "user", "p", true);
-        Trainer trainer = new Trainer(user, List.of());
+        Trainer trainer = new Trainer(user, managedType);
 
         when(trainerRepository.findByUser_Username("user"))
                 .thenReturn(Optional.of(trainer));
@@ -109,7 +109,7 @@ class TrainerServiceTest {
     @DisplayName("updateActiveStatus activates an inactive trainer")
     void updateActiveStatus_activatesTrainer() {
         User user = new User("F", "L", "user", "p", false);
-        Trainer trainer = new Trainer(user, List.of());
+        Trainer trainer = new Trainer(user, managedType);
 
         when(trainerRepository.findByUser_Username("user"))
                 .thenReturn(Optional.of(trainer));
@@ -134,7 +134,7 @@ class TrainerServiceTest {
     @DisplayName("updateActiveStatus deactivates an active trainer")
     void updateActiveStatus_deactivatesActiveTrainer() {
         User user = new User("John", "Trainer", "trainer.user", "password", true);
-        Trainer trainer = new Trainer(user, List.of());
+        Trainer trainer = new Trainer(user, managedType);
 
         when(trainerRepository.findByUser_Username("trainer.user"))
                 .thenReturn(Optional.of(trainer));
@@ -151,7 +151,7 @@ class TrainerServiceTest {
     @DisplayName("updateActiveStatus activates an inactive trainer")
     void updateActiveStatus_activatesInactiveTrainer() {
         User user = new User("John", "Trainer", "trainer.user", "password", false);
-        Trainer trainer = new Trainer(user, List.of());
+        Trainer trainer = new Trainer(user, managedType);
 
         when(trainerRepository.findByUser_Username("trainer.user"))
                 .thenReturn(Optional.of(trainer));
@@ -168,7 +168,7 @@ class TrainerServiceTest {
     @DisplayName("updateActiveStatus keeps the current status when it already matches")
     void updateActiveStatus_keepsExistingStatus() {
         User user = new User("John", "Trainer", "trainer.user", "password", true);
-        Trainer trainer = new Trainer(user, List.of());
+        Trainer trainer = new Trainer(user, managedType);
 
         when(trainerRepository.findByUser_Username("trainer.user"))
                 .thenReturn(Optional.of(trainer));

@@ -31,7 +31,9 @@ class TrainingRepositoryTest {
     @DisplayName("save training and query by trainee username")
     void saveAndQueryByTrainee() {
         TrainingType type = trainingTypeRepository.findByTrainingTypeName("Cardio").orElseGet(() -> trainingTypeRepository.save(TestDataFactory.trainingType("Cardio")));
-        Trainer trainer = trainerRepository.save(TestDataFactory.trainer("Mark","T","muser","p",true));
+        Trainer trainer = TestDataFactory.trainer("Mark","T","muser","p",true);
+        trainer.setSpecialization(type);
+        trainer = trainerRepository.save(trainer);
         Trainee trainee = traineeRepository.save(TestDataFactory.trainee("Lily","P","lily","pw",true));
 
         Training tr = new Training(trainee, trainer, "Morning", type, new Date(), 40);
@@ -45,7 +47,9 @@ class TrainingRepositoryTest {
     @DisplayName("query trainer trainings by date and name filter")
     void queryTrainerTrainings() {
         TrainingType type = trainingTypeRepository.findByTrainingTypeName("Yoga").orElseGet(() -> trainingTypeRepository.save(TestDataFactory.trainingType("Yoga")));
-        Trainer trainer = trainerRepository.save(TestDataFactory.trainer("Sam","H","sam","pw",true));
+        Trainer trainer = TestDataFactory.trainer("Sam","H","sam","pw",true);
+        trainer.setSpecialization(type);
+        trainer = trainerRepository.save(trainer);
         Trainee trainee = traineeRepository.save(TestDataFactory.trainee("Nina","Q","nina","pw",true));
 
         Date now = new Date();

@@ -42,7 +42,7 @@ class TrainingServiceTest {
     @DisplayName("createTraining succeeds when all refs exist")
     void createTrainingSuccess() {
         Trainee trainee = new Trainee(new User("F","L","t1","p",true), null, null);
-        Trainer trainer = new Trainer(new User("F","L","tr","p",true), List.of());
+        Trainer trainer = new Trainer(new User("F","L","tr","p",true), new TrainingType("Cardio"));
         TrainingType type = new TrainingType("Cardio");
 
         when(traineeRepository.findByUser_Username("t1")).thenReturn(Optional.of(trainee));
@@ -78,7 +78,7 @@ class TrainingServiceTest {
     @DisplayName("createTraining fails when type missing")
     void createTrainingFailsTypeMissing() {
         Trainee trainee = new Trainee(new User("F","L","t1","p",true), null, null);
-        Trainer trainer = new Trainer(new User("F","L","tr","p",true), List.of());
+        Trainer trainer = new Trainer(new User("F","L","tr","p",true), new TrainingType("Cardio"));
         TrainingType type = new TrainingType("Cardio");
         when(traineeRepository.findByUser_Username("t1")).thenReturn(Optional.of(trainee));
         when(trainerRepository.findByUser_Username("tr")).thenReturn(Optional.of(trainer));

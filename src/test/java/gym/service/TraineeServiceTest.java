@@ -2,6 +2,7 @@ package gym.service;
 
 import gym.domain.Trainee;
 import gym.domain.Trainer;
+import gym.domain.TrainingType;
 import gym.domain.User;
 import gym.repository.TraineeRepository;
 import gym.repository.TrainerRepository;
@@ -71,7 +72,7 @@ class TraineeServiceTest {
         Trainee tr = new Trainee(u, null, null);
         when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(tr));
 
-        Trainer t1 = new Trainer(new User("T","One","t1","p",true), List.of());
+        Trainer t1 = new Trainer(new User("T","One","t1","p",true), new TrainingType("Cardio"));
         when(trainerRepository.findByUser_Username("t1")).thenReturn(Optional.of(t1));
         when(traineeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 

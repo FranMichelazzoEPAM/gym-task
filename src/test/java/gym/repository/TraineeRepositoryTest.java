@@ -30,7 +30,9 @@ class TraineeRepositoryTest {
     @DisplayName("save trainee and find by username")
     void saveAndFindByUserUsername() {
         TrainingType type = trainingTypeRepository.findByTrainingTypeName("Cardio").orElseGet(() -> trainingTypeRepository.save(TestDataFactory.trainingType("Cardio")));
-        Trainer trainer = trainerRepository.save(TestDataFactory.trainer("T1","Last","tuser","pass",true));
+        Trainer trainer = TestDataFactory.trainer("T1","Last","tuser","pass",true);
+        trainer.setSpecialization(type);
+        trainer = trainerRepository.save(trainer);
         Trainee trainee = traineeRepository.save(TestDataFactory.trainee("John","Doe","jdoe","pwd",true));
 
         // create a training to ensure relationships persist
@@ -48,7 +50,9 @@ class TraineeRepositoryTest {
     @DisplayName("delete trainee by username cascades trainings")
     void deleteByUserUsernameCascadesTrainings() {
         TrainingType type = trainingTypeRepository.findByTrainingTypeName("Pilates").orElseGet(() -> trainingTypeRepository.save(TestDataFactory.trainingType("Pilates")));
-        Trainer trainer = trainerRepository.save(TestDataFactory.trainer("T2","Last","tuser2","pwd2",true));
+        Trainer trainer = TestDataFactory.trainer("T2","Last","tuser2","pwd2",true);
+        trainer.setSpecialization(type);
+        trainer = trainerRepository.save(trainer);
         Trainee trainee = traineeRepository.save(TestDataFactory.trainee("Alice","Smith","asmith","pwd",true));
 
         Training training = new Training(trainee, trainer, "Session2", type, new Date(), 30);

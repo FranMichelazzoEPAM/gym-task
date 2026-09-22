@@ -36,7 +36,7 @@ class GymFacadeIntegrationTest {
         TrainingType type = trainingTypeRepository.findByTrainingTypeName("Cardio").orElseGet(() -> trainingTypeRepository.save(new TrainingType("Cardio")));
 
         // Create trainer (no auth required)
-        Trainer trainer = gymFacade.createTrainer("Tom", "Trainer", List.of(type));
+        Trainer trainer = gymFacade.createTrainer("Tom", "Trainer", type);
         assertThat(trainer.getUser()).isNotNull();
         String trainerUser = trainer.getUser().getUsername();
         String trainerPass = trainer.getUser().getPassword();

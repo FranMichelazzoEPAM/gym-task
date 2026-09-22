@@ -13,7 +13,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
 import java.util.NoSuchElementException;
 
 import static org.mockito.ArgumentMatchers.eq;
@@ -42,18 +41,16 @@ class TrainerControllerTest {
     @Test
     void registerTrainer_withValidRequest_returns201AndCredentials() throws Exception {
         TrainingType cardio = new TrainingType("Cardio");
-        TrainingType yoga = new TrainingType("Yoga");
 
         User user = new User("Fran", "Miche", "fran.miche", "generatedPass123", true);
-        Trainer trainer = new Trainer(user, List.of(cardio, yoga));
+        Trainer trainer = new Trainer(user, cardio);
 
         when(gymFacade.getTrainingTypeByName("Cardio")).thenReturn(cardio);
-        when(gymFacade.getTrainingTypeByName("Yoga")).thenReturn(yoga);
-        when(gymFacade.createTrainer(eq("Fran"), eq("Miche"), eq(List.of(cardio, yoga))))
+        when(gymFacade.createTrainer(eq("Fran"), eq("Miche"), eq(cardio)))
                 .thenReturn(trainer);
 
-        TrainerRegistrationRequest request = new TrainerRegistrationRequest(
-                "Fran", "Miche", List.of("Cardio", "Yoga"));
+        TrainerRegistrationRequest request =
+                new TrainerRegistrationRequest("Fran", "Miche", "Cardio");
 
         mockMvc.perform(post("/api/trainers")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -62,12 +59,12 @@ class TrainerControllerTest {
                 .andExpect(jsonPath("$.username").value("fran.miche"))
                 .andExpect(jsonPath("$.password").value("generatedPass123"));
 
-        verify(gymFacade).createTrainer(eq("Fran"), eq("Miche"), eq(List.of(cardio, yoga)));
+        verify(gymFacade).createTrainer(eq("Fran"), eq("Miche"), eq(cardio));
     }
 
     @Test
     void registerTrainer_withMissingFirstName_returns400() throws Exception {
-        String invalidJson = "{\"lastName\":\"Miche\",\"specializations\":[\"Cardio\"]}";
+        String invalidJson = "{\"lastName\":\"Miche\",\"specialization\":\"Cardio\"}";
 
         mockMvc.perform(post("/api/trainers")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -77,7 +74,7 @@ class TrainerControllerTest {
 
     @Test
     void registerTrainer_withMissingLastName_returns400() throws Exception {
-        String invalidJson = "{\"firstName\":\"Fran\",\"specializations\":[\"Cardio\"]}";
+        String invalidJson = "{\"firstName\":\"Fran\",\"specialization\":\"Cardio\"}";
 
         mockMvc.perform(post("/api/trainers")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -86,7 +83,7 @@ class TrainerControllerTest {
     }
 
     @Test
-    void registerTrainer_withMissingSpecializationsField_returns400() throws Exception {
+    void registerTrainer_withMissingSpecializationField_returns400() throws Exception {
         String invalidJson = "{\"firstName\":\"Fran\",\"lastName\":\"Miche\"}";
 
         mockMvc.perform(post("/api/trainers")
@@ -96,8 +93,9 @@ class TrainerControllerTest {
     }
 
     @Test
-    void registerTrainer_withEmptySpecializationsList_returns400() throws Exception {
-        String invalidJson = "{\"firstName\":\"Fran\",\"lastName\":\"Miche\",\"specializations\":[]}";
+    void registerTrainer_withBlankSpecialization_returns400() throws Exception {
+        String invalidJson =
+                "{\"firstName\":\"Fran\",\"lastName\":\"Miche\",\"specialization\":\"   \"}";
 
         mockMvc.perform(post("/api/trainers")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -106,8 +104,9 @@ class TrainerControllerTest {
     }
 
     @Test
-    void registerTrainer_withBlankSpecializationInList_returns400() throws Exception {
-        String invalidJson = "{\"firstName\":\"Fran\",\"lastName\":\"Miche\",\"specializations\":[\"Cardio\",\"   \"]}";
+    void registerTrainer_withNonStringSpecialization_returns400() throws Exception {
+        String invalidJson =
+                "{\"firstName\":\"Fran\",\"lastName\":\"Miche\",\"specialization\":123}";
 
         mockMvc.perform(post("/api/trainers")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -120,7 +119,8 @@ class TrainerControllerTest {
         when(gymFacade.getTrainingTypeByName("Nonexistent"))
                 .thenThrow(new NoSuchElementException("Training type 'Nonexistent' not found."));
 
-        String json = "{\"firstName\":\"Fran\",\"lastName\":\"Miche\",\"specializations\":[\"Nonexistent\"]}";
+        String json =
+                "{\"firstName\":\"Fran\",\"lastName\":\"Miche\",\"specialization\":\"Nonexistent\"}";
 
         mockMvc.perform(post("/api/trainers")
                         .contentType(MediaType.APPLICATION_JSON)

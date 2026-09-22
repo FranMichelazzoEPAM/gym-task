@@ -27,7 +27,9 @@ class TrainerRepositoryTest {
     @DisplayName("save trainer and find by username")
     void saveAndFindByUserUsername() {
         TrainingType type = trainingTypeRepository.findByTrainingTypeName("Crossfit").orElseGet(() -> trainingTypeRepository.save(TestDataFactory.trainingType("Crossfit")));
-        Trainer trainer = trainerRepository.save(TestDataFactory.trainer("Anna","Bell","ann","pwd",true));
+        Trainer trainer = TestDataFactory.trainer("Anna","Bell","ann","pwd",true);
+        trainer.setSpecialization(type);
+        trainer = trainerRepository.save(trainer);
         assertThat(trainer.getTrainerId()).isNotNull();
 
         var found = trainerRepository.findByUser_Username("ann");
@@ -38,8 +40,13 @@ class TrainerRepositoryTest {
     @Test
     @DisplayName("find unassigned trainers for trainee")
     void findUnassignedTrainersForTrainee() {
-        Trainer t1 = trainerRepository.save(TestDataFactory.trainer("T1","One","t1","p1",true));
-        Trainer t2 = trainerRepository.save(TestDataFactory.trainer("T2","Two","t2","p2",true));
+        TrainingType type = trainingTypeRepository.findByTrainingTypeName("Crossfit").orElseGet(() -> trainingTypeRepository.save(TestDataFactory.trainingType("Crossfit")));
+        Trainer t1 = TestDataFactory.trainer("T1","One","t1","p1",true);
+        t1.setSpecialization(type);
+        t1 = trainerRepository.save(t1);
+        Trainer t2 = TestDataFactory.trainer("T2","Two","t2","p2",true);
+        t2.setSpecialization(type);
+        t2 = trainerRepository.save(t2);
         Trainee trainee = traineeRepository.save(TestDataFactory.trainee("Jake","Long","jake","pw",true));
 
         // assign t1 to trainee
