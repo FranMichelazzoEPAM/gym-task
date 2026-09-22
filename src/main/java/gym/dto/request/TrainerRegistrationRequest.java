@@ -1,9 +1,6 @@
 package gym.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-
-import java.util.List;
 
 public class TrainerRegistrationRequest {
     @NotBlank(message = "First name is required")
@@ -12,17 +9,17 @@ public class TrainerRegistrationRequest {
     @NotBlank(message = "Last name is required.")
     private String lastName;
 
-    @NotEmpty(message = "At least one specialization is required")
-    private List<@NotBlank(message = "Specialization name must not be blank") String> specializations;
+    @NotBlank(message = "Specialization is required")
+    private String specialization;
 
     public TrainerRegistrationRequest() {
         // Required by Jackson
     }
 
-    public TrainerRegistrationRequest(String firstName, String lastName, List<String> specializations) {
+    public TrainerRegistrationRequest(String firstName, String lastName, String specialization) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.specializations = specializations;
+        this.specialization = specialization;
     }
 
     public String getFirstName() { return firstName; }
@@ -31,6 +28,6 @@ public class TrainerRegistrationRequest {
     public String getLastName() { return lastName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
 
-    public List<String> getSpecializations() { return specializations; }
-    public void setSpecializations(List<String> specialization) { this.specializations = specialization; }
+    public String getSpecialization() { return specialization; }
+    public void setSpecialization(String specialization) { this.specialization = specialization; }
 }
