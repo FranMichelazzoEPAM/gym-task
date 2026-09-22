@@ -2,7 +2,6 @@ package gym.controller;
 
 import gym.domain.Trainer;
 import gym.domain.TrainingType;
-import gym.dto.request.ToggleStatusTraineeRequest;
 import gym.dto.request.ToggleStatusTrainerRequest;
 import gym.dto.request.TrainerRegistrationRequest;
 import gym.dto.response.CredentialsResponse;
@@ -38,15 +37,13 @@ public class TrainerController {
     public ResponseEntity<CredentialsResponse> registerTrainer(
             @Valid @RequestBody TrainerRegistrationRequest request) {
 
-        List<TrainingType> trainingTypes = request.getSpecializations()
-                .stream()
-                .map(gymFacade::getTrainingTypeByName)
-                .toList();
+        TrainingType trainingType =
+                gymFacade.getTrainingTypeByName(request.getSpecialization());
 
         Trainer createdTrainer = gymFacade.createTrainer(
                 request.getFirstName(),
                 request.getLastName(),
-                trainingTypes
+                trainingType
         );
 
         CredentialsResponse response = TrainerMapper.toCredentialsResponse(createdTrainer);
