@@ -89,15 +89,37 @@ class TrainerServiceTest {
     }
 
     @Test
-    @DisplayName("toggleActiveStatus flips isActive")
-    void toggleActiveStatus() {
-        User u = new User("F","L","user","p", true);
-        Trainer t = new Trainer(u, List.of());
-        when(trainerRepository.findByUser_Username("user")).thenReturn(Optional.of(t));
-        when(trainerRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    @DisplayName("updateActiveStatus deactivates an active trainer")
+    void updateActiveStatus() {
+        User user = new User("F", "L", "user", "p", true);
+        Trainer trainer = new Trainer(user, List.of());
 
-        trainerService.toggleActiveStatus("user");
-        assertThat(t.getUser().isActive()).isFalse();
+        when(trainerRepository.findByUser_Username("user"))
+                .thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        trainerService.updateActiveStatus("user", false);
+
+        assertThat(trainer.getUser().isActive()).isFalse();
+        verify(trainerRepository).save(trainer);
+    }
+
+    @Test
+    @DisplayName("updateActiveStatus activates an inactive trainer")
+    void updateActiveStatus_activatesTrainer() {
+        User user = new User("F", "L", "user", "p", false);
+        Trainer trainer = new Trainer(user, List.of());
+
+        when(trainerRepository.findByUser_Username("user"))
+                .thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        trainerService.updateActiveStatus("user", true);
+
+        assertThat(trainer.getUser().isActive()).isTrue();
+        verify(trainerRepository).save(trainer);
     }
 
     @Test
@@ -106,5 +128,68 @@ class TrainerServiceTest {
         when(trainerRepository.findUnassignedTrainersForTrainee("tuser")).thenReturn(List.of());
         var list = trainerService.getTrainersNotAssignedToTrainee("tuser");
         assertThat(list).isEmpty();
+    }
+
+    @Test
+    @DisplayName("updateActiveStatus deactivates an active trainer")
+    void updateActiveStatus_deactivatesActiveTrainer() {
+        User user = new User("John", "Trainer", "trainer.user", "password", true);
+        Trainer trainer = new Trainer(user, List.of());
+
+        when(trainerRepository.findByUser_Username("trainer.user"))
+                .thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        trainerService.updateActiveStatus("trainer.user", false);
+
+        assertThat(trainer.getUser().isActive()).isFalse();
+        verify(trainerRepository).save(trainer);
+    }
+
+    @Test
+    @DisplayName("updateActiveStatus activates an inactive trainer")
+    void updateActiveStatus_activatesInactiveTrainer() {
+        User user = new User("John", "Trainer", "trainer.user", "password", false);
+        Trainer trainer = new Trainer(user, List.of());
+
+        when(trainerRepository.findByUser_Username("trainer.user"))
+                .thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        trainerService.updateActiveStatus("trainer.user", true);
+
+        assertThat(trainer.getUser().isActive()).isTrue();
+        verify(trainerRepository).save(trainer);
+    }
+
+    @Test
+    @DisplayName("updateActiveStatus keeps the current status when it already matches")
+    void updateActiveStatus_keepsExistingStatus() {
+        User user = new User("John", "Trainer", "trainer.user", "password", true);
+        Trainer trainer = new Trainer(user, List.of());
+
+        when(trainerRepository.findByUser_Username("trainer.user"))
+                .thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        trainerService.updateActiveStatus("trainer.user", true);
+
+        assertThat(trainer.getUser().isActive()).isTrue();
+        verify(trainerRepository).save(trainer);
+    }
+
+    @Test
+    @DisplayName("updateActiveStatus throws when trainer does not exist")
+    void updateActiveStatus_throwsWhenTrainerDoesNotExist() {
+        when(trainerRepository.findByUser_Username("missing"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NoSuchElementException.class,
+                () -> trainerService.updateActiveStatus("missing", true)
+        );
     }
 }

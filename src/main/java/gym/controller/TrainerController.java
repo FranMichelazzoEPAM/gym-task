@@ -2,20 +2,20 @@ package gym.controller;
 
 import gym.domain.Trainer;
 import gym.domain.TrainingType;
+import gym.dto.request.ToggleStatusTraineeRequest;
+import gym.dto.request.ToggleStatusTrainerRequest;
 import gym.dto.request.TrainerRegistrationRequest;
 import gym.dto.response.CredentialsResponse;
 import gym.facade.GymFacade;
 import gym.mapper.TrainerMapper;
+import gym.security.Credentials;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -51,5 +51,24 @@ public class TrainerController {
 
         CredentialsResponse response = TrainerMapper.toCredentialsResponse(createdTrainer);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // Activate/De-Activate Trainer
+    @PatchMapping("/status")
+    @Operation(summary = "Toggle Trainer status", description = "Changes the status of the Trainer to the given one")
+    @ApiResponse(responseCode = "200", description = "Trainer's active status updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid request")
+    @ApiResponse(responseCode = "401", description = "Invalid or missing credentials")
+    @ApiResponse(responseCode = "404", description = "Trainer not found")
+    public ResponseEntity<Void> updateTrainerStatus(
+            @Valid @RequestBody ToggleStatusTrainerRequest request,
+            Credentials caller) {
+
+        gymFacade.updateTrainerActiveStatus(caller.username(),
+                caller.password(),
+                request.getUsername(),
+                request.getActive());
+
+        return ResponseEntity.ok().build();
     }
 }

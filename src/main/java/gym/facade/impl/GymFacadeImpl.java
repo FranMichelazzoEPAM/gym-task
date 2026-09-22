@@ -140,9 +140,9 @@ public class GymFacadeImpl implements GymFacade {
 
     @RequiresAuthentication
     @Override
-    public void toggleTrainerActiveStatus(String callerUsername, String callerPassword, String username) {
-        LOG.debug("Facade toggleTrainerActiveStatus {}", username);
-        trainerService.toggleActiveStatus(username);
+    public void updateTrainerActiveStatus(String callerUsername, String callerPassword, String username, boolean active) {
+        LOG.debug("Facade updateTrainerActiveStatus {}", username);
+        trainerService.updateActiveStatus(username, active);
     }
 
     @RequiresAuthentication

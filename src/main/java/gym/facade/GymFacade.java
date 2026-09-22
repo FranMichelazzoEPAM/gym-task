@@ -31,7 +31,7 @@ public interface GymFacade {
     Trainer getTrainer(String callerUsername, String callerPassword, String username);
     List<Trainer> getAllTrainers(String callerUsername, String callerPassword);
     boolean authenticateTrainer(String username, String password);
-    void toggleTrainerActiveStatus(String callerUsername, String callerPassword, String username);
+    void updateTrainerActiveStatus(String callerUsername, String callerPassword, String username, boolean active);
     List<Trainer> getTrainersNotAssignedToTrainee(String callerUsername, String callerPassword, String traineeUsername);
 
     // Trainings

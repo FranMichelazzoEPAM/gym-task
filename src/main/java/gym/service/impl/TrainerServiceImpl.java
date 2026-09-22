@@ -108,12 +108,16 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Transactional
-    public void toggleActiveStatus(String username) {
-        LOG.debug("Toggling active status for trainer: {}", username);
+    public void updateActiveStatus(String username, boolean active) {
+        LOG.debug("Updating active status for trainer: {}", username);
         Trainer trainer = findTrainerOrThrow(username);
-        trainer.getUser().toggleActive();
+
+        if (trainer.getUser().isActive() != active) {
+            trainer.getUser().toggleActive();
+        }
+
         trainerRepository.save(trainer);
-        LOG.info("Trainer {} active status is now {}", username, trainer.getUser().isActive());
+        LOG.info("Trainer {} active status is now {}", username, active);
     }
 
     @Override
