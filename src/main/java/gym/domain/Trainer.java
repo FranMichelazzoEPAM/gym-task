@@ -1,7 +1,9 @@
 package gym.domain;
 
 import jakarta.persistence.*;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "trainers")
@@ -16,13 +18,9 @@ public class Trainer {
     @JoinColumn(name = "userId", nullable = false, unique = true)
     private User user;
 
-    @ManyToMany
-    @JoinTable(
-            name = "trainer_specializations",
-            joinColumns = @JoinColumn(name = "trainerId"),
-            inverseJoinColumns = @JoinColumn(name = "trainingTypeId")
-    )
-    private List<TrainingType> specialization = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "trainingTypeId", nullable = false)
+    private TrainingType specialization;
 
     @ManyToMany(mappedBy = "trainers")
     private List<Trainee> trainees = new ArrayList<>();
@@ -30,7 +28,7 @@ public class Trainer {
     @OneToMany(mappedBy = "trainer")
     private List<Training> trainings = new ArrayList<>();
 
-    public Trainer(User user, List<TrainingType> specialization) {
+    public Trainer(User user, TrainingType specialization) {
         this.user = user;
         this.specialization = specialization;
     }
@@ -43,9 +41,9 @@ public class Trainer {
 
     public void setUser(User user) { this.user = user; }
 
-    public List<TrainingType> getSpecialization() { return specialization; }
+    public TrainingType getSpecialization() { return specialization; }
 
-    public void setSpecialization(List<TrainingType> specialization) { this.specialization = specialization; }
+    public void setSpecialization(TrainingType specialization) { this.specialization = specialization; }
 
     public List<Trainee> getTrainees() { return trainees; }
 
