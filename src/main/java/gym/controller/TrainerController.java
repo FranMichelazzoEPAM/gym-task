@@ -5,6 +5,8 @@ import gym.domain.TrainingType;
 import gym.dto.request.ToggleStatusTrainerRequest;
 import gym.dto.request.TrainerRegistrationRequest;
 import gym.dto.response.CredentialsResponse;
+import gym.dto.response.TrainerProfileResponse;
+import gym.dto.response.TrainerSummaryResponse;
 import gym.facade.GymFacade;
 import gym.mapper.TrainerMapper;
 import gym.security.Credentials;
@@ -67,5 +69,22 @@ public class TrainerController {
                 request.getActive());
 
         return ResponseEntity.ok().build();
+    }
+
+    // Get Trainer
+    @GetMapping("/{username}")
+    @Operation(summary = "Get trainer profile by username")
+    @ApiResponse(responseCode = "200", description = "Trainer found")
+    @ApiResponse(responseCode = "400", description = "Invalid input data")
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    @ApiResponse(responseCode = "404", description = "Trainer not found")
+    public ResponseEntity<TrainerProfileResponse> getTrainer(
+            Credentials caller,
+            @PathVariable String username) {
+
+        Trainer trainer = gymFacade.getTrainer(caller.username(), caller.password(), username);
+        TrainerProfileResponse response = TrainerMapper.toProfileResponse(trainer);
+
+        return ResponseEntity.ok(response);
     }
 }

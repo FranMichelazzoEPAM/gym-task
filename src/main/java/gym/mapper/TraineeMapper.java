@@ -1,10 +1,7 @@
 package gym.mapper;
 
 import gym.domain.Trainee;
-import gym.dto.response.CredentialsResponse;
-import gym.dto.response.TraineeProfileResponse;
-import gym.dto.response.TraineeUpdateResponse;
-import gym.dto.response.TrainerSummaryResponse;
+import gym.dto.response.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -64,5 +61,12 @@ public class TraineeMapper {
                 trainee.getUser().isActive(),
                 trainerSummaries
         );
+    }
+
+    public static TraineeSummaryResponse toSummary(Trainee trainee) {
+        return new TraineeSummaryResponse(
+                trainee.getUser().getUsername(),
+                trainee.getUser().getFirstName(),
+                trainee.getUser().getLastName());
     }
 }

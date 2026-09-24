@@ -1,6 +1,7 @@
 package gym.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gym.domain.Trainee;
 import gym.domain.Trainer;
 import gym.domain.TrainingType;
 import gym.domain.User;
@@ -15,16 +16,19 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.NoSuchElementException;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.Base64;
+import java.util.List;
 
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 @WebMvcTest(TrainerController.class)
 class TrainerControllerTest {
@@ -132,6 +136,73 @@ class TrainerControllerTest {
     private String basicAuthHeader(String username, String password) {
         String credentials = username + ":" + password;
         return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
+    }
+
+    @Test
+    void getTrainer_withValidCredentials_returns200AndProfile() throws Exception {
+        TrainingType cardio = new TrainingType("Cardio");
+        User trainerUser = new User("Fran", "Miche", "Fran.Miche1", "trainerPass", true);
+        Trainer trainer = new Trainer(trainerUser, cardio);
+
+        User traineeUser = new User("Maxi", "Miliano", "Maxi.Miliano", "pass123", true);
+        Trainee trainee = new Trainee(traineeUser, null, null);
+        trainer.getTrainees().add(trainee);
+
+        when(gymFacade.getTrainer("Caller.User", "callerPass", "Fran.Miche1"))
+                .thenReturn(trainer);
+
+        mockMvc.perform(get("/api/trainers/Fran.Miche1")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Fran"))
+                .andExpect(jsonPath("$.lastName").value("Miche"))
+                .andExpect(jsonPath("$.specialization").value("Cardio"))
+                .andExpect(jsonPath("$.active").value(true))
+                .andExpect(jsonPath("$.trainees", hasSize(1)))
+                .andExpect(jsonPath("$.trainees[0].username").value("Maxi.Miliano"))
+                .andExpect(jsonPath("$.trainees[0].firstName").value("Maxi"))
+                .andExpect(jsonPath("$.trainees[0].lastName").value("Miliano"));
+    }
+
+    @Test
+    void getTrainer_withNoTrainees_returnsEmptyTraineesList() throws Exception {
+        TrainingType cardio = new TrainingType("Cardio");
+        User trainerUser = new User("Fran", "Miche", "Fran.Miche1", "trainerPass", true);
+        Trainer trainer = new Trainer(trainerUser, cardio);
+
+        when(gymFacade.getTrainer("Caller.User", "callerPass", "Fran.Miche1"))
+                .thenReturn(trainer);
+
+        mockMvc.perform(get("/api/trainers/Fran.Miche1")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trainees", hasSize(0)));
+    }
+
+    @Test
+    void getTrainer_withMissingAuthorizationHeader_returns401() throws Exception {
+        mockMvc.perform(get("/api/trainers/Fran.Miche1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getTrainer_withInvalidCredentials_returns401() throws Exception {
+        when(gymFacade.getTrainer("Caller.User", "wrongPass", "Fran.Miche1"))
+                .thenThrow(new SecurityException("Authentication failed for user: Caller.User"));
+
+        mockMvc.perform(get("/api/trainers/Fran.Miche1")
+                        .header("Authorization", basicAuthHeader("Caller.User", "wrongPass")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getTrainer_withNonexistentUsername_returns404() throws Exception {
+        when(gymFacade.getTrainer("Caller.User", "callerPass", "Ghost.User"))
+                .thenThrow(new NoSuchElementException("Trainer with username Ghost.User not found."));
+
+        mockMvc.perform(get("/api/trainers/Ghost.User")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass")))
+                .andExpect(status().isNotFound());
     }
 
     @Test
