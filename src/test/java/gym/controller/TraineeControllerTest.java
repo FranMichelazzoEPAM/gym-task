@@ -8,6 +8,7 @@ import gym.domain.User;
 import gym.dto.request.TraineeRegistrationRequest;
 import gym.facade.GymFacade;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -20,6 +21,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
@@ -327,6 +329,171 @@ class TraineeControllerTest {
 
         mockMvc.perform(get("/api/trainees/Ghost.User")
                         .header("Authorization", basicAuthHeader("Caller.User", "callerPass")))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateTrainee_withValidRequest_returns200AndUpdatedProfile() throws Exception {
+        User existingUser = new User("OldFirst", "OldLast", "Maxi.Miliano", "pass123", true);
+        Trainee existingTrainee = new Trainee(existingUser, Date.valueOf("1990-01-01"), "Old Address");
+
+        User updatedUser = new User("NewFirst", "NewLast", "Maxi.Miliano", "pass123", true);
+        Trainee updatedTrainee = new Trainee(updatedUser, Date.valueOf("1992-02-02"), "New Address");
+
+        when(gymFacade.getTrainee("Caller.User", "callerPass", "Maxi.Miliano"))
+                .thenReturn(existingTrainee);
+        when(gymFacade.updateTrainee(eq("Caller.User"), eq("callerPass"), any(Trainee.class)))
+                .thenReturn(updatedTrainee);
+
+        String requestBody = """
+        {
+          "firstName": "NewFirst",
+          "lastName": "NewLast",
+          "dateOfBirth": "1992-02-02",
+          "address": "New Address",
+          "active": true
+        }
+        """;
+
+        mockMvc.perform(put("/api/trainees/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("Maxi.Miliano"))
+                .andExpect(jsonPath("$.firstName").value("NewFirst"))
+                .andExpect(jsonPath("$.lastName").value("NewLast"))
+                .andExpect(jsonPath("$.dateOfBirth").value("1992-02-02"))
+                .andExpect(jsonPath("$.address").value("New Address"))
+                .andExpect(jsonPath("$.active").value(true));
+
+        verify(gymFacade).updateTraineeActiveStatus("Caller.User", "callerPass", "Maxi.Miliano", true);
+    }
+
+    @Test
+    void updateTrainee_reconcilesActiveStatusInResponse_evenIfStaleInReturnedObject() throws Exception {
+        // Simulates the exact scenario the reconciliation code handles: updateTrainee's
+        // returned object still shows the OLD active value, since that call never touched it.
+        User existingUser = new User("First", "Last", "Maxi.Miliano", "pass123", false);
+        Trainee existingTrainee = new Trainee(existingUser, null, null);
+
+        User staleUser = new User("First", "Last", "Maxi.Miliano", "pass123", false);
+        Trainee staleUpdatedTrainee = new Trainee(staleUser, null, null);
+
+        when(gymFacade.getTrainee("Caller.User", "callerPass", "Maxi.Miliano"))
+                .thenReturn(existingTrainee);
+        when(gymFacade.updateTrainee(eq("Caller.User"), eq("callerPass"), any(Trainee.class)))
+                .thenReturn(staleUpdatedTrainee);
+
+        String requestBody = """
+        {
+          "firstName": "First",
+          "lastName": "Last",
+          "active": true
+        }
+        """;
+
+        mockMvc.perform(put("/api/trainees/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(true));
+
+        verify(gymFacade).updateTraineeActiveStatus("Caller.User", "callerPass", "Maxi.Miliano", true);
+    }
+
+    @Test
+    void updateTrainee_withOptionalFieldsOmitted_preservesExistingValues() throws Exception {
+        User existingUser = new User("OldFirst", "OldLast", "Maxi.Miliano", "pass123", true);
+        Trainee existingTrainee = new Trainee(existingUser, Date.valueOf("1990-01-01"), "Original Address");
+
+        when(gymFacade.getTrainee("Caller.User", "callerPass", "Maxi.Miliano"))
+                .thenReturn(existingTrainee);
+        when(gymFacade.updateTrainee(eq("Caller.User"), eq("callerPass"), any(Trainee.class)))
+                .thenReturn(existingTrainee);
+
+        String requestBody = """
+        {
+          "firstName": "NewFirst",
+          "lastName": "NewLast",
+          "active": true
+        }
+        """;
+        // dateOfBirth and address deliberately omitted
+
+        mockMvc.perform(put("/api/trainees/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        verify(gymFacade).updateTrainee(eq("Caller.User"), eq("callerPass"), captor.capture());
+
+        Trainee passedTrainee = captor.getValue();
+        assertThat(passedTrainee.getDateOfBirth()).isEqualTo(Date.valueOf("1990-01-01"));
+        assertThat(passedTrainee.getAddress()).isEqualTo("Original Address");
+        assertThat(passedTrainee.getUser().getFirstName()).isEqualTo("NewFirst");
+    }
+
+    @Test
+    void updateTrainee_withMissingFirstName_returns400() throws Exception {
+        String invalidJson = "{\"lastName\":\"Last\",\"active\":true}";
+
+        mockMvc.perform(put("/api/trainees/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateTrainee_withMissingActive_returns400() throws Exception {
+        String invalidJson = "{\"firstName\":\"First\",\"lastName\":\"Last\"}";
+
+        mockMvc.perform(put("/api/trainees/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateTrainee_withMissingAuthorizationHeader_returns401() throws Exception {
+        String body = "{\"firstName\":\"First\",\"lastName\":\"Last\",\"active\":true}";
+
+        mockMvc.perform(put("/api/trainees/Maxi.Miliano")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateTrainee_withInvalidCredentials_returns401() throws Exception {
+        when(gymFacade.getTrainee("Caller.User", "wrongPass", "Maxi.Miliano"))
+                .thenThrow(new SecurityException("Authentication failed for user: Caller.User"));
+
+        String body = "{\"firstName\":\"First\",\"lastName\":\"Last\",\"active\":true}";
+
+        mockMvc.perform(put("/api/trainees/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "wrongPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateTrainee_withNonexistentUsername_returns404() throws Exception {
+        when(gymFacade.getTrainee("Caller.User", "callerPass", "Ghost.User"))
+                .thenThrow(new NoSuchElementException("Trainee with username Ghost.User not found."));
+
+        String body = "{\"firstName\":\"First\",\"lastName\":\"Last\",\"active\":true}";
+
+        mockMvc.perform(put("/api/trainees/Ghost.User")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
                 .andExpect(status().isNotFound());
     }
 }

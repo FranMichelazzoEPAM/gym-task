@@ -3,8 +3,10 @@ package gym.controller;
 import gym.domain.Trainee;
 import gym.dto.request.ToggleStatusTraineeRequest;
 import gym.dto.request.TraineeRegistrationRequest;
+import gym.dto.request.TraineeUpdateRequest;
 import gym.dto.response.CredentialsResponse;
 import gym.dto.response.TraineeProfileResponse;
+import gym.dto.response.TraineeUpdateResponse;
 import gym.facade.GymFacade;
 import gym.mapper.TraineeMapper;
 import gym.security.Credentials;
@@ -93,4 +95,38 @@ public class TraineeController {
         return ResponseEntity.ok(response);
     }
 
+    // Update Trainee
+    @PutMapping("/{username}")
+    @Operation(summary = "Update trainee profile")
+    @ApiResponse(responseCode = "200", description = "Trainee updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data")
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    @ApiResponse(responseCode = "404", description = "Trainee not found")
+    public ResponseEntity<TraineeUpdateResponse> updateTrainee(
+            Credentials caller,
+            @PathVariable String username,
+            @Valid @RequestBody TraineeUpdateRequest request ) {
+
+        Trainee existing = gymFacade.getTrainee(caller.username(), caller.password(), username);
+
+        existing.getUser().setFirstName(request.getFirstName());
+        existing.getUser().setLastName(request.getLastName());
+
+        if (request.getDateOfBirth() != null) {
+            existing.setDateOfBirth(TraineeMapper.toDate(request.getDateOfBirth()));
+        }
+        if (request.getAddress() != null) {
+            existing.setAddress(request.getAddress());
+        }
+
+        Trainee updated = gymFacade.updateTrainee(caller.username(), caller.password(), existing);
+        gymFacade.updateTraineeActiveStatus(caller.username(), caller.password(), username, request.getActive());
+
+        if (updated.getUser().isActive() != request.getActive()) {
+            updated.getUser().toggleActive();
+        }
+
+        TraineeUpdateResponse response = TraineeMapper.toUpdateResponse(updated);
+        return ResponseEntity.ok(response);
+    }
 }
