@@ -4,6 +4,7 @@ import gym.domain.Trainer;
 import gym.domain.TrainingType;
 import gym.domain.User;
 import gym.repository.TrainerRepository;
+import gym.repository.TraineeRepository;
 import gym.repository.TrainingTypeRepository;
 import gym.service.PasswordGenerationService;
 import gym.service.TrainerService;
@@ -21,16 +22,19 @@ public class TrainerServiceImpl implements TrainerService {
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(TrainerServiceImpl.class);
 
     private final TrainerRepository trainerRepository;
+    private final TraineeRepository traineeRepository;
     private final TrainingTypeRepository trainingTypeRepository;
     private final UsernameGenerationService usernameGenerationService;
     private final PasswordGenerationService passwordGenerationService;
 
     @Autowired
     public TrainerServiceImpl(TrainerRepository trainerRepository,
+                              TraineeRepository traineeRepository,
                               TrainingTypeRepository trainingTypeRepository,
                               UsernameGenerationService usernameGenerationService,
                               PasswordGenerationService passwordGenerationService) {
         this.trainerRepository = trainerRepository;
+        this.traineeRepository = traineeRepository;
         this.trainingTypeRepository = trainingTypeRepository;
         this.usernameGenerationService = usernameGenerationService;
         this.passwordGenerationService = passwordGenerationService;
@@ -123,6 +127,14 @@ public class TrainerServiceImpl implements TrainerService {
     @Transactional(readOnly = true)
     public List<Trainer> getTrainersNotAssignedToTrainee(String traineeUsername) {
         LOG.debug("Getting trainers not assigned to trainee: {}", traineeUsername);
+
+        traineeRepository.findByUser_Username(traineeUsername)
+                .orElseThrow(() -> {
+                    LOG.error("Trainee not found: {}", traineeUsername);
+                    return new NoSuchElementException(
+                            "Trainee with username " + traineeUsername + " not found.");
+                });
+
         return trainerRepository.findUnassignedTrainersForTrainee(traineeUsername);
     }
 

@@ -1,8 +1,10 @@
 package gym.service;
 
 import gym.domain.Trainer;
+import gym.domain.Trainee;
 import gym.domain.TrainingType;
 import gym.domain.User;
+import gym.repository.TraineeRepository;
 import gym.repository.TrainerRepository;
 import gym.repository.TrainingTypeRepository;
 import gym.service.impl.TrainerServiceImpl;
@@ -26,6 +28,8 @@ class TrainerServiceTest {
 
     private TrainerRepository trainerRepository;
 
+    private TraineeRepository traineeRepository;
+
     private TrainingTypeRepository trainingTypeRepository;
 
     private UsernameGenerationService usernameGenerationService;
@@ -41,6 +45,7 @@ class TrainerServiceTest {
     @BeforeEach
     void setUp() {
         trainerRepository = Mockito.mock(TrainerRepository.class);
+        traineeRepository = Mockito.mock(TraineeRepository.class);
         trainingTypeRepository = Mockito.mock(TrainingTypeRepository.class);
         // Provide simple stubs for username/password generators
         usernameGenerationService = new UsernameGenerationService(Mockito.mock(gym.repository.UserRepository.class)) {
@@ -51,7 +56,12 @@ class TrainerServiceTest {
             @Override
             public String generateRandomPassword() { return "pwd"; }
         };
-        trainerService = new TrainerServiceImpl(trainerRepository, trainingTypeRepository, usernameGenerationService, passwordGenerationService);
+        trainerService = new TrainerServiceImpl(
+                trainerRepository,
+                traineeRepository,
+                trainingTypeRepository,
+                usernameGenerationService,
+                passwordGenerationService);
 
         managedType = new TrainingType("Cardio");
     }
@@ -125,9 +135,34 @@ class TrainerServiceTest {
     @Test
     @DisplayName("getTrainersNotAssignedToTrainee delegates to repository")
     void getTrainersNotAssigned() {
+        Trainee trainee = new Trainee(
+                new User("T", "User", "tuser", "password", true),
+                null,
+                null);
+        when(traineeRepository.findByUser_Username("tuser"))
+                .thenReturn(Optional.of(trainee));
         when(trainerRepository.findUnassignedTrainersForTrainee("tuser")).thenReturn(List.of());
+
         var list = trainerService.getTrainersNotAssignedToTrainee("tuser");
+
         assertThat(list).isEmpty();
+        verify(traineeRepository).findByUser_Username("tuser");
+        verify(trainerRepository).findUnassignedTrainersForTrainee("tuser");
+    }
+
+    @Test
+    @DisplayName("getTrainersNotAssignedToTrainee throws when trainee does not exist")
+    void getTrainersNotAssigned_throwsWhenTraineeDoesNotExist() {
+        when(traineeRepository.findByUser_Username("missing"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                NoSuchElementException.class,
+                () -> trainerService.getTrainersNotAssignedToTrainee("missing")
+        );
+
+        verify(traineeRepository).findByUser_Username("missing");
+        verifyNoInteractions(trainerRepository);
     }
 
     @Test

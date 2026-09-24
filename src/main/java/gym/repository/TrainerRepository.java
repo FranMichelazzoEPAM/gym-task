@@ -17,7 +17,17 @@ public interface TrainerRepository extends JpaRepository<Trainer, UUID> {
     @Query("SELECT t FROM Trainer t LEFT JOIN FETCH t.specialization")
     List<Trainer> findAll(); // override base method — same fix for getAllTrainers()
 
-    @Query("SELECT tr FROM Trainer tr WHERE tr NOT IN " +
-            "(SELECT t FROM Trainee tn JOIN tn.trainers t WHERE tn.user.username = :username)")
+    @Query("""
+    SELECT tr
+    FROM Trainer tr
+    LEFT JOIN FETCH tr.specialization
+    WHERE tr.user.isActive = true
+      AND tr NOT IN (
+          SELECT t
+          FROM Trainee tn
+          JOIN tn.trainers t
+          WHERE tn.user.username = :username
+      )
+    """)
     List<Trainer> findUnassignedTrainersForTrainee(@Param("username") String username);
 }

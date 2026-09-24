@@ -87,4 +87,26 @@ public class TrainerController {
 
         return ResponseEntity.ok(response);
     }
+
+
+    // Get not assigned on trainee active trainers
+    @GetMapping("/not-assigned-on-trainee/{username}")
+    @Operation(summary = "Finds active trainers not already assigned to the given trainee")
+    @ApiResponse(responseCode = "200", description = "Trainer(s) found")
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    @ApiResponse(responseCode = "404", description = "Trainee not found")
+    public ResponseEntity<List<TrainerSummaryResponse>> getNotAssignedOnTraineeActiveTrainers(
+            Credentials caller,
+            @PathVariable String username) {
+
+        List<Trainer> trainers = gymFacade.getTrainersNotAssignedToTrainee(
+                caller.username(), caller.password(), username);
+
+        List<TrainerSummaryResponse> response = trainers.stream()
+                .map(TrainerMapper::toSummary)
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
 }

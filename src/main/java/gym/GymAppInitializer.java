@@ -10,4 +10,3 @@ public class GymAppInitializer {
         SpringApplication.run(GymAppInitializer.class, args);
     }
 }
-

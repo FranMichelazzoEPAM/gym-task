@@ -206,6 +206,87 @@ class TrainerControllerTest {
     }
 
     @Test
+    void getNotAssignedOnTraineeActiveTrainers_withValidCredentials_returnsTrainerSummaries()
+            throws Exception {
+        TrainingType cardio = new TrainingType("Cardio");
+        TrainingType strength = new TrainingType("Strength");
+
+        Trainer cardioTrainer = new Trainer(
+                new User("Fran", "Miche", "Fran.Miche1", "trainerPass", true),
+                cardio);
+        Trainer strengthTrainer = new Trainer(
+                new User("Ana", "Silva", "Ana.Silva", "trainerPass", true),
+                strength);
+
+        when(gymFacade.getTrainersNotAssignedToTrainee(
+                "Caller.User", "callerPass", "Maxi.Miliano"))
+                .thenReturn(List.of(cardioTrainer, strengthTrainer));
+
+        mockMvc.perform(get("/api/trainers/not-assigned-on-trainee/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].username").value("Fran.Miche1"))
+                .andExpect(jsonPath("$[0].firstName").value("Fran"))
+                .andExpect(jsonPath("$[0].lastName").value("Miche"))
+                .andExpect(jsonPath("$[0].specialization").value("Cardio"))
+                .andExpect(jsonPath("$[1].username").value("Ana.Silva"))
+                .andExpect(jsonPath("$[1].firstName").value("Ana"))
+                .andExpect(jsonPath("$[1].lastName").value("Silva"))
+                .andExpect(jsonPath("$[1].specialization").value("Strength"));
+
+        verify(gymFacade).getTrainersNotAssignedToTrainee(
+                "Caller.User", "callerPass", "Maxi.Miliano");
+    }
+
+    @Test
+    void getNotAssignedOnTraineeActiveTrainers_whenNoTrainersAreAvailable_returnsEmptyList()
+            throws Exception {
+        when(gymFacade.getTrainersNotAssignedToTrainee(
+                "Caller.User", "callerPass", "Maxi.Miliano"))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/trainers/not-assigned-on-trainee/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void getNotAssignedOnTraineeActiveTrainers_withMissingAuthorizationHeader_returns401()
+            throws Exception {
+        mockMvc.perform(get("/api/trainers/not-assigned-on-trainee/Maxi.Miliano"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(gymFacade);
+    }
+
+    @Test
+    void getNotAssignedOnTraineeActiveTrainers_withInvalidCredentials_returns401()
+            throws Exception {
+        when(gymFacade.getTrainersNotAssignedToTrainee(
+                "Caller.User", "wrongPass", "Maxi.Miliano"))
+                .thenThrow(new SecurityException("Authentication failed for user: Caller.User"));
+
+        mockMvc.perform(get("/api/trainers/not-assigned-on-trainee/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "wrongPass")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getNotAssignedOnTraineeActiveTrainers_withNonexistentTrainee_returns404()
+            throws Exception {
+        when(gymFacade.getTrainersNotAssignedToTrainee(
+                "Caller.User", "callerPass", "Ghost.User"))
+                .thenThrow(new NoSuchElementException(
+                        "Trainee with username Ghost.User not found."));
+
+        mockMvc.perform(get("/api/trainers/not-assigned-on-trainee/Ghost.User")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass")))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void updateTrainerStatus_withActiveTrue_returns200() throws Exception {
         String request = """
             {
