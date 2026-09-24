@@ -2,10 +2,14 @@ package gym.mapper;
 
 import gym.domain.Trainee;
 import gym.dto.response.CredentialsResponse;
+import gym.dto.response.TraineeProfileResponse;
+import gym.dto.response.TrainerSummaryResponse;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 
 public class TraineeMapper {
     private TraineeMapper() {
@@ -22,6 +26,26 @@ public class TraineeMapper {
         return new CredentialsResponse(
                 trainee.getUser().getUsername(),
                 trainee.getUser().getPassword()
+        );
+    }
+
+    public static LocalDate toLocalDate(Date date) {
+        if (date == null) return null;
+        return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    public static TraineeProfileResponse toProfileResponse(Trainee trainee) {
+        List<TrainerSummaryResponse> trainerSummaries = trainee.getTrainers().stream()
+                .map(TrainerMapper::toSummary)
+                .toList();
+
+        return new TraineeProfileResponse(
+                trainee.getUser().getFirstName(),
+                trainee.getUser().getLastName(),
+                toLocalDate(trainee.getDateOfBirth()),
+                trainee.getAddress(),
+                trainee.getUser().isActive(),
+                trainerSummaries
         );
     }
 }
