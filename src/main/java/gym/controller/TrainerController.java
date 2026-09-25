@@ -4,9 +4,11 @@ import gym.domain.Trainer;
 import gym.domain.TrainingType;
 import gym.dto.request.ToggleStatusTrainerRequest;
 import gym.dto.request.TrainerRegistrationRequest;
+import gym.dto.request.TrainerUpdateRequest;
 import gym.dto.response.CredentialsResponse;
 import gym.dto.response.TrainerProfileResponse;
 import gym.dto.response.TrainerSummaryResponse;
+import gym.dto.response.TrainerUpdateResponse;
 import gym.facade.GymFacade;
 import gym.mapper.TrainerMapper;
 import gym.security.Credentials;
@@ -88,6 +90,41 @@ public class TrainerController {
         return ResponseEntity.ok(response);
     }
 
+    //Update Trainer Profile
+    @PutMapping("/{username}")
+    @Operation(summary = "Updates a trainer by trainer's username")
+    @ApiResponse(responseCode = "200", description = "Trainer updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data")
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    @ApiResponse(responseCode = "404", description = "Trainer not found")
+    public ResponseEntity<TrainerUpdateResponse> updateTrainer(
+            Credentials caller,
+            @PathVariable String username,
+            @Valid @RequestBody TrainerUpdateRequest request) {
+
+        Trainer existing = gymFacade.getTrainer(caller.username(), caller.password(), username);
+        TrainingType specialization = gymFacade.getTrainingTypeByName(request.getSpecialization());
+
+        existing.getUser().setFirstName(request.getFirstName());
+        existing.getUser().setLastName(request.getLastName());
+        existing.setSpecialization(specialization);
+
+        Trainer updatedTrainer = gymFacade.updateTrainer(caller.username(), caller.password(), existing);
+
+        gymFacade.updateTrainerActiveStatus(caller.username(),
+                caller.password(),
+                username,
+                request.isActive());
+
+        if (updatedTrainer.getUser().isActive() != request.isActive()) {
+            updatedTrainer.getUser().toggleActive();
+        }
+
+        TrainerUpdateResponse response = TrainerMapper.toUpdateResponse(updatedTrainer);
+
+        return ResponseEntity.ok(response);
+
+    }
 
     // Get not assigned on trainee active trainers
     @GetMapping("/not-assigned-on-trainee/{username}")

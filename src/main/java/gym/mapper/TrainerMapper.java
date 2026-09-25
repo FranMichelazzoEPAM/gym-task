@@ -1,10 +1,7 @@
 package gym.mapper;
 
 import gym.domain.Trainer;
-import gym.dto.response.CredentialsResponse;
-import gym.dto.response.TraineeSummaryResponse;
-import gym.dto.response.TrainerProfileResponse;
-import gym.dto.response.TrainerSummaryResponse;
+import gym.dto.response.*;
 
 import java.util.List;
 
@@ -39,5 +36,19 @@ public class TrainerMapper {
                 trainer.getUser().isActive(),
                 traineeSummaries
         );
+    }
+
+    public static TrainerUpdateResponse toUpdateResponse(Trainer trainer) {
+        List<TraineeSummaryResponse> traineeSummaries = trainer.getTrainees().stream()
+                .map(TraineeMapper::toSummary)
+                .toList();
+
+        return new TrainerUpdateResponse(
+                trainer.getUser().getUsername(),
+                trainer.getUser().getFirstName(),
+                trainer.getUser().getLastName(),
+                trainer.getSpecialization().getTrainingTypeName(),
+                trainer.getUser().isActive(),
+                traineeSummaries);
     }
 }

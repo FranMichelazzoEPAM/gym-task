@@ -17,10 +17,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.NoSuchElementException;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -437,5 +439,178 @@ class TrainerControllerTest {
                 .andExpect(jsonPath("$.message").value("Malformed request body"));
 
         verifyNoInteractions(gymFacade);
+    }
+
+    @Test
+    void updateTrainer_withValidRequest_returns200AndUpdatedProfile() throws Exception {
+        TrainingType oldSpecialization = new TrainingType("Cardio");
+        User existingUser = new User("OldFirst", "OldLast", "Fran.Miche1", "pass123", true);
+        Trainer existingTrainer = new Trainer(existingUser, oldSpecialization);
+
+        TrainingType newSpecialization = new TrainingType("Yoga");
+        User updatedUser = new User("NewFirst", "NewLast", "Fran.Miche1", "pass123", true);
+        Trainer updatedTrainer = new Trainer(updatedUser, newSpecialization);
+
+        when(gymFacade.getTrainer("Caller.User", "callerPass", "Fran.Miche1"))
+                .thenReturn(existingTrainer);
+        when(gymFacade.getTrainingTypeByName("Yoga"))
+                .thenReturn(newSpecialization);
+        when(gymFacade.updateTrainer(eq("Caller.User"), eq("callerPass"), any(Trainer.class)))
+                .thenReturn(updatedTrainer);
+
+        String requestBody = """
+        {
+          "firstName": "NewFirst",
+          "lastName": "NewLast",
+          "specialization": "Yoga",
+          "active": true
+        }
+        """;
+
+        mockMvc.perform(put("/api/trainers/Fran.Miche1")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("Fran.Miche1"))
+                .andExpect(jsonPath("$.firstName").value("NewFirst"))
+                .andExpect(jsonPath("$.lastName").value("NewLast"))
+                .andExpect(jsonPath("$.specialization").value("Yoga"))
+                .andExpect(jsonPath("$.active").value(true));
+
+        verify(gymFacade).updateTrainerActiveStatus("Caller.User", "callerPass", "Fran.Miche1", true);
+    }
+
+    @Test
+    void updateTrainer_reconcilesActiveStatusInResponse_evenIfStaleInReturnedObject() throws Exception {
+        TrainingType cardio = new TrainingType("Cardio");
+
+        User existingUser = new User("First", "Last", "Fran.Miche1", "pass123", false);
+        Trainer existingTrainer = new Trainer(existingUser, cardio);
+
+        User staleUser = new User("First", "Last", "Fran.Miche1", "pass123", false);
+        Trainer staleUpdatedTrainer = new Trainer(staleUser, cardio);
+
+        when(gymFacade.getTrainer("Caller.User", "callerPass", "Fran.Miche1"))
+                .thenReturn(existingTrainer);
+        when(gymFacade.getTrainingTypeByName("Cardio"))
+                .thenReturn(cardio);
+        when(gymFacade.updateTrainer(eq("Caller.User"), eq("callerPass"), any(Trainer.class)))
+                .thenReturn(staleUpdatedTrainer);
+
+        String requestBody = """
+        {
+          "firstName": "First",
+          "lastName": "Last",
+          "specialization": "Cardio",
+          "active": true
+        }
+        """;
+
+        mockMvc.perform(put("/api/trainers/Fran.Miche1")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(true));
+
+        verify(gymFacade).updateTrainerActiveStatus("Caller.User", "callerPass", "Fran.Miche1", true);
+    }
+
+    @Test
+    void updateTrainer_withMissingFirstName_returns400() throws Exception {
+        String invalidJson = "{\"lastName\":\"Last\",\"specialization\":\"Cardio\",\"active\":true}";
+
+        mockMvc.perform(put("/api/trainers/Fran.Miche1")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateTrainer_withMissingSpecialization_returns400() throws Exception {
+        String invalidJson = "{\"firstName\":\"First\",\"lastName\":\"Last\",\"active\":true}";
+
+        mockMvc.perform(put("/api/trainers/Fran.Miche1")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateTrainer_withMissingActive_returns400() throws Exception {
+        String invalidJson = "{\"firstName\":\"First\",\"lastName\":\"Last\",\"specialization\":\"Cardio\"}";
+
+        mockMvc.perform(put("/api/trainers/Fran.Miche1")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateTrainer_withNonexistentSpecialization_returns404() throws Exception {
+        User existingUser = new User("First", "Last", "Fran.Miche1", "pass123", true);
+        Trainer existingTrainer = new Trainer(existingUser, new TrainingType("Cardio"));
+
+        when(gymFacade.getTrainer("Caller.User", "callerPass", "Fran.Miche1"))
+                .thenReturn(existingTrainer);
+        when(gymFacade.getTrainingTypeByName("Nonexistent"))
+                .thenThrow(new NoSuchElementException("Training type 'Nonexistent' not found."));
+
+        String requestBody = """
+        {
+          "firstName": "First",
+          "lastName": "Last",
+          "specialization": "Nonexistent",
+          "active": true
+        }
+        """;
+
+        mockMvc.perform(put("/api/trainers/Fran.Miche1")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateTrainer_withMissingAuthorizationHeader_returns401() throws Exception {
+        String body = "{\"firstName\":\"First\",\"lastName\":\"Last\",\"specialization\":\"Cardio\",\"active\":true}";
+
+        mockMvc.perform(put("/api/trainers/Fran.Miche1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateTrainer_withInvalidCredentials_returns401() throws Exception {
+        when(gymFacade.getTrainer("Caller.User", "wrongPass", "Fran.Miche1"))
+                .thenThrow(new SecurityException("Authentication failed for user: Caller.User"));
+
+        String body = "{\"firstName\":\"First\",\"lastName\":\"Last\",\"specialization\":\"Cardio\",\"active\":true}";
+
+        mockMvc.perform(put("/api/trainers/Fran.Miche1")
+                        .header("Authorization", basicAuthHeader("Caller.User", "wrongPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateTrainer_withNonexistentUsername_returns404() throws Exception {
+        when(gymFacade.getTrainer("Caller.User", "callerPass", "Ghost.Trainer"))
+                .thenThrow(new NoSuchElementException("Trainer with username Ghost.Trainer not found."));
+
+        String body = "{\"firstName\":\"First\",\"lastName\":\"Last\",\"specialization\":\"Cardio\",\"active\":true}";
+
+        mockMvc.perform(put("/api/trainers/Ghost.Trainer")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isNotFound());
     }
 }
