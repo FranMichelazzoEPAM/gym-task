@@ -6,6 +6,7 @@ import gym.dto.response.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -68,5 +69,13 @@ public class TraineeMapper {
                 trainee.getUser().getUsername(),
                 trainee.getUser().getFirstName(),
                 trainee.getUser().getLastName());
+    }
+
+    public static TraineeTrainerListUpdateResponse toTrainerListUpdateResponse(Trainee trainee) {
+        List<TrainerSummaryResponse> trainerSummaries = trainee.getTrainers().stream()
+                .map(TrainerMapper::toSummary)
+                .toList();
+
+        return new TraineeTrainerListUpdateResponse(trainerSummaries);
     }
 }

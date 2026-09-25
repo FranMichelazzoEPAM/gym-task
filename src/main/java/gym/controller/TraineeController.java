@@ -3,9 +3,11 @@ package gym.controller;
 import gym.domain.Trainee;
 import gym.dto.request.ToggleStatusTraineeRequest;
 import gym.dto.request.TraineeRegistrationRequest;
+import gym.dto.request.TraineeTrainerListUpdateRequest;
 import gym.dto.request.TraineeUpdateRequest;
 import gym.dto.response.CredentialsResponse;
 import gym.dto.response.TraineeProfileResponse;
+import gym.dto.response.TraineeTrainerListUpdateResponse;
 import gym.dto.response.TraineeUpdateResponse;
 import gym.facade.GymFacade;
 import gym.mapper.TraineeMapper;
@@ -128,5 +130,28 @@ public class TraineeController {
 
         TraineeUpdateResponse response = TraineeMapper.toUpdateResponse(updated);
         return ResponseEntity.ok(response);
+    }
+
+    // Update trainee's trainer list
+    @PutMapping("/trainers-list/{username}")
+    @Operation(summary = "Updates the Trainee trainers list by trainee username")
+    @ApiResponse(responseCode = "200", description = "Trainee trainers list updated successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input data")
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    @ApiResponse(responseCode = "404", description = "Trainee not found")
+    public ResponseEntity<TraineeTrainerListUpdateResponse> updateTraineeTrainersList(
+            Credentials caller,
+            @PathVariable String username,
+            @Valid @RequestBody TraineeTrainerListUpdateRequest request) {
+
+        Trainee updated = gymFacade.updateTraineeTrainersList(
+                caller.username(), caller.password(), username, request.getTrainersUsernames()
+        );
+
+        TraineeTrainerListUpdateResponse response =
+                TraineeMapper.toTrainerListUpdateResponse(updated);
+
+        return ResponseEntity.ok(response);
+
     }
 }

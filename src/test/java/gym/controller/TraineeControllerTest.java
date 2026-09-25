@@ -496,4 +496,141 @@ class TraineeControllerTest {
                         .content(body))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void updateTraineeTrainersList_withValidRequest_returns200AndUpdatedList() throws Exception {
+        TrainingType cardio = new TrainingType("Cardio");
+        User trainerUser1 = new User("Fran", "Miche", "Fran.Miche1", "pass1", true);
+        Trainer trainer1 = new Trainer(trainerUser1, cardio);
+
+        TrainingType yoga = new TrainingType("Yoga");
+        User trainerUser2 = new User("Ana", "Lopez", "Ana.Lopez1", "pass2", true);
+        Trainer trainer2 = new Trainer(trainerUser2, yoga);
+
+        User traineeUser = new User("Maxi", "Miliano", "Maxi.Miliano", "traineePass", true);
+        Trainee trainee = new Trainee(traineeUser, null, null);
+        trainee.setTrainers(List.of(trainer1, trainer2));
+
+        when(gymFacade.updateTraineeTrainersList(
+                eq("Caller.User"), eq("callerPass"), eq("Maxi.Miliano"), eq(List.of("Fran.Miche1", "Ana.Lopez1"))))
+                .thenReturn(trainee);
+
+        String requestBody = """
+        {
+          "trainersUsernames": ["Fran.Miche1", "Ana.Lopez1"]
+        }
+        """;
+
+        mockMvc.perform(put("/api/trainees/trainers-list/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trainers", hasSize(2)))
+                .andExpect(jsonPath("$.trainers[0].username").value("Fran.Miche1"))
+                .andExpect(jsonPath("$.trainers[0].specialization").value("Cardio"))
+                .andExpect(jsonPath("$.trainers[1].username").value("Ana.Lopez1"))
+                .andExpect(jsonPath("$.trainers[1].specialization").value("Yoga"));
+    }
+
+    @Test
+    void updateTraineeTrainersList_withEmptyList_returns200AndEmptyTrainersList() throws Exception {
+        User traineeUser = new User("Maxi", "Miliano", "Maxi.Miliano", "traineePass", true);
+        Trainee trainee = new Trainee(traineeUser, null, null);
+        // trainers left empty — simulates removing all assigned trainers
+
+        when(gymFacade.updateTraineeTrainersList(
+                eq("Caller.User"), eq("callerPass"), eq("Maxi.Miliano"), eq(List.of())))
+                .thenReturn(trainee);
+
+        String requestBody = """
+        {
+          "trainersUsernames": []
+        }
+        """;
+
+        mockMvc.perform(put("/api/trainees/trainers-list/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.trainers", hasSize(0)));
+    }
+
+    @Test
+    void updateTraineeTrainersList_withNullTrainersUsernames_returns400() throws Exception {
+        String invalidJson = "{}";
+
+        mockMvc.perform(put("/api/trainees/trainers-list/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateTraineeTrainersList_withBlankUsernameInList_returns400() throws Exception {
+        String invalidJson = "{\"trainersUsernames\": [\"Fran.Miche1\", \"   \"]}";
+
+        mockMvc.perform(put("/api/trainees/trainers-list/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateTraineeTrainersList_withMissingAuthorizationHeader_returns401() throws Exception {
+        String body = "{\"trainersUsernames\": [\"Fran.Miche1\"]}";
+
+        mockMvc.perform(put("/api/trainees/trainers-list/Maxi.Miliano")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateTraineeTrainersList_withInvalidCredentials_returns401() throws Exception {
+        when(gymFacade.updateTraineeTrainersList(
+                eq("Caller.User"), eq("wrongPass"), eq("Maxi.Miliano"), eq(List.of("Fran.Miche1"))))
+                .thenThrow(new SecurityException("Authentication failed for user: Caller.User"));
+
+        String body = "{\"trainersUsernames\": [\"Fran.Miche1\"]}";
+
+        mockMvc.perform(put("/api/trainees/trainers-list/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "wrongPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateTraineeTrainersList_withNonexistentTraineeUsername_returns404() throws Exception {
+        when(gymFacade.updateTraineeTrainersList(
+                eq("Caller.User"), eq("callerPass"), eq("Ghost.User"), eq(List.of("Fran.Miche1"))))
+                .thenThrow(new NoSuchElementException("Trainee with username Ghost.User not found."));
+
+        String body = "{\"trainersUsernames\": [\"Fran.Miche1\"]}";
+
+        mockMvc.perform(put("/api/trainees/trainers-list/Ghost.User")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateTraineeTrainersList_withNonexistentTrainerUsernameInList_returns404() throws Exception {
+        when(gymFacade.updateTraineeTrainersList(
+                eq("Caller.User"), eq("callerPass"), eq("Maxi.Miliano"), eq(List.of("Ghost.Trainer"))))
+                .thenThrow(new NoSuchElementException("Trainer with username Ghost.Trainer not found."));
+
+        String body = "{\"trainersUsernames\": [\"Ghost.Trainer\"]}";
+
+        mockMvc.perform(put("/api/trainees/trainers-list/Maxi.Miliano")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isNotFound());
+    }
 }
