@@ -1,16 +1,15 @@
 package gym.controller;
 
 import gym.domain.Trainer;
+import gym.domain.Training;
 import gym.domain.TrainingType;
 import gym.dto.request.ToggleStatusTrainerRequest;
 import gym.dto.request.TrainerRegistrationRequest;
 import gym.dto.request.TrainerUpdateRequest;
-import gym.dto.response.CredentialsResponse;
-import gym.dto.response.TrainerProfileResponse;
-import gym.dto.response.TrainerSummaryResponse;
-import gym.dto.response.TrainerUpdateResponse;
+import gym.dto.response.*;
 import gym.facade.GymFacade;
 import gym.mapper.TrainerMapper;
+import gym.mapper.TrainingMapper;
 import gym.security.Credentials;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -141,6 +142,35 @@ public class TrainerController {
 
         List<TrainerSummaryResponse> response = trainers.stream()
                 .map(TrainerMapper::toSummary)
+                .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Get trainer trainings list
+    @GetMapping("/{username}/trainings")
+    @Operation(summary = "Get trainer's trainings list", description = "Returns a filtered list of a trainer's trainings")
+    @ApiResponse(responseCode = "200", description = "Trainings retrieved successfully")
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    @ApiResponse(responseCode = "404", description = "Trainer not found")
+    public ResponseEntity<List<TrainerTrainingSummaryResponse>> getTrainerTrainings(
+            Credentials caller,
+            @PathVariable String username,
+            @RequestParam(required = false) LocalDate periodFrom,
+            @RequestParam(required = false) LocalDate periodTo,
+            @RequestParam(required = false) String traineeName) {
+
+        // Existence check — same pattern as the Trainee version, kept for consistency
+        gymFacade.getTrainer(caller.username(), caller.password(), username);
+
+        Date fromDate = TrainingMapper.toDate(periodFrom);
+        Date toDate = TrainingMapper.toDate(periodTo);
+
+        List<Training> trainings = gymFacade.getTrainerTrainings(
+                caller.username(), caller.password(), username, fromDate, toDate, traineeName);
+
+        List<TrainerTrainingSummaryResponse> response = trainings.stream()
+                .map(TrainingMapper::toTrainerSummary)
                 .toList();
 
         return ResponseEntity.ok(response);

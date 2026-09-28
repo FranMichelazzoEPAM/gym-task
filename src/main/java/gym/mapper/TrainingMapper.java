@@ -1,7 +1,8 @@
 package gym.mapper;
 
 import gym.domain.Training;
-import gym.dto.response.TrainingSummaryResponse;
+import gym.dto.response.TraineeTrainingSummaryResponse;
+import gym.dto.response.TrainerTrainingSummaryResponse;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -25,16 +26,29 @@ public class TrainingMapper {
         return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    public static TrainingSummaryResponse toSummary(Training training) {
+    public static TraineeTrainingSummaryResponse toSummary(Training training) {
         String trainerName = training.getTrainer().getUser().getFirstName()
                 + " " + training.getTrainer().getUser().getLastName();
 
-        return new TrainingSummaryResponse(
+        return new TraineeTrainingSummaryResponse(
                 training.getTrainingName(),
                 toLocalDate(training.getTrainingDate()),
                 training.getTrainingType().getTrainingTypeName(),
                 training.getTrainingDuration(),
                 trainerName
+        );
+    }
+
+    public static TrainerTrainingSummaryResponse toTrainerSummary(Training training) {
+        String traineeName = training.getTrainee().getUser().getFirstName()
+                + " " + training.getTrainee().getUser().getLastName();
+
+        return new TrainerTrainingSummaryResponse(
+                training.getTrainingName(),
+                toLocalDate(training.getTrainingDate()),
+                training.getTrainingType().getTrainingTypeName(),
+                training.getTrainingDuration(),
+                traineeName
         );
     }
 }

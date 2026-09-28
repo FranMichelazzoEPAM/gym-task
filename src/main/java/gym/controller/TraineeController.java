@@ -161,7 +161,7 @@ public class TraineeController {
     @ApiResponse(responseCode = "200", description = "Trainings retrieved successfully")
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @ApiResponse(responseCode = "404", description = "Trainee not found")
-    public ResponseEntity<List<TrainingSummaryResponse>> getTraineeTrainings(
+    public ResponseEntity<List<TraineeTrainingSummaryResponse>> getTraineeTrainings(
             Credentials caller,
             @PathVariable String username,
             @RequestParam(required = false) LocalDate periodFrom,
@@ -178,7 +178,7 @@ public class TraineeController {
         List<Training> trainings = gymFacade.getTraineeTrainings(
                 caller.username(), caller.password(), username, fromDate, toDate, trainerName, trainingType);
 
-        List<TrainingSummaryResponse> response = trainings.stream()
+        List<TraineeTrainingSummaryResponse> response = trainings.stream()
                 .map(TrainingMapper::toSummary)
                 .toList();
 
