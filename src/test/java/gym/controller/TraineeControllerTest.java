@@ -1,10 +1,7 @@
 package gym.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import gym.domain.Trainee;
-import gym.domain.Trainer;
-import gym.domain.TrainingType;
-import gym.domain.User;
+import gym.domain.*;
 import gym.dto.request.TraineeRegistrationRequest;
 import gym.facade.GymFacade;
 import org.junit.jupiter.api.Test;
@@ -17,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Base64;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -632,5 +630,116 @@ class TraineeControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getTraineeTrainings_withAllFilters_returns200AndFilteredList() throws Exception {
+        TrainingType cardio = new TrainingType("Cardio");
+        User trainerUser = new User("Fran", "Miche", "Fran.Miche1", "pass123", true);
+        Trainer trainer = new Trainer(trainerUser, cardio);
+
+        User traineeUser = new User("Maxi", "Miliano", "Maxi.Miliano", "traineePass", true);
+        Trainee trainee = new Trainee(traineeUser, null, null);
+
+        Training training = new Training(trainee, trainer, "Morning Cardio", cardio,
+                java.sql.Date.valueOf("2025-03-10"), 60);
+
+        when(gymFacade.getTrainee("Caller.User", "callerPass", "Maxi.Miliano"))
+                .thenReturn(trainee);
+
+        LocalDate from = LocalDate.of(2025, 1, 1);
+        LocalDate to = LocalDate.of(2025, 12, 31);
+        java.util.Date expectedFrom = java.util.Date.from(from.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        java.util.Date expectedTo = java.util.Date.from(to.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+        when(gymFacade.getTraineeTrainings(
+                eq("Caller.User"), eq("callerPass"), eq("Maxi.Miliano"),
+                eq(expectedFrom), eq(expectedTo), eq("Fran"), eq("Cardio")))
+                .thenReturn(List.of(training));
+
+        mockMvc.perform(get("/api/trainees/Maxi.Miliano/trainings")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass"))
+                        .param("periodFrom", "2025-01-01")
+                        .param("periodTo", "2025-12-31")
+                        .param("trainerName", "Fran")
+                        .param("trainingType", "Cardio"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].trainingName").value("Morning Cardio"))
+                .andExpect(jsonPath("$[0].trainingDate").value("2025-03-10"))
+                .andExpect(jsonPath("$[0].trainingType").value("Cardio"))
+                .andExpect(jsonPath("$[0].trainingDuration").value(60))
+                .andExpect(jsonPath("$[0].trainerName").value("Fran Miche"));
+    }
+
+    @Test
+    void getTraineeTrainings_withNoFilters_returns200AndFullList() throws Exception {
+        TrainingType cardio = new TrainingType("Cardio");
+        User trainerUser = new User("Fran", "Miche", "Fran.Miche1", "pass123", true);
+        Trainer trainer = new Trainer(trainerUser, cardio);
+
+        User traineeUser = new User("Maxi", "Miliano", "Maxi.Miliano", "traineePass", true);
+        Trainee trainee = new Trainee(traineeUser, null, null);
+
+        Training training = new Training(trainee, trainer, "Morning Cardio", cardio,
+                java.sql.Date.valueOf("2025-03-10"), 60);
+
+        when(gymFacade.getTrainee("Caller.User", "callerPass", "Maxi.Miliano"))
+                .thenReturn(trainee);
+        when(gymFacade.getTraineeTrainings(
+                eq("Caller.User"), eq("callerPass"), eq("Maxi.Miliano"),
+                isNull(), isNull(), isNull(), isNull()))
+                .thenReturn(List.of(training));
+
+        mockMvc.perform(get("/api/trainees/Maxi.Miliano/trainings")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+    }
+
+    @Test
+    void getTraineeTrainings_withNoMatches_returns200AndEmptyList() throws Exception {
+        User traineeUser = new User("Maxi", "Miliano", "Maxi.Miliano", "traineePass", true);
+        Trainee trainee = new Trainee(traineeUser, null, null);
+
+        when(gymFacade.getTrainee("Caller.User", "callerPass", "Maxi.Miliano"))
+                .thenReturn(trainee);
+        when(gymFacade.getTraineeTrainings(
+                eq("Caller.User"), eq("callerPass"), eq("Maxi.Miliano"),
+                isNull(), isNull(), isNull(), isNull()))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/trainees/Maxi.Miliano/trainings")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void getTraineeTrainings_withMissingAuthorizationHeader_returns401() throws Exception {
+        mockMvc.perform(get("/api/trainees/Maxi.Miliano/trainings"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getTraineeTrainings_withInvalidCredentials_returns401() throws Exception {
+        when(gymFacade.getTrainee("Caller.User", "wrongPass", "Maxi.Miliano"))
+                .thenThrow(new SecurityException("Authentication failed for user: Caller.User"));
+
+        mockMvc.perform(get("/api/trainees/Maxi.Miliano/trainings")
+                        .header("Authorization", basicAuthHeader("Caller.User", "wrongPass")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getTraineeTrainings_withNonexistentUsername_returns404() throws Exception {
+        when(gymFacade.getTrainee("Caller.User", "callerPass", "Ghost.User"))
+                .thenThrow(new NoSuchElementException("Trainee with username Ghost.User not found."));
+
+        mockMvc.perform(get("/api/trainees/Ghost.User/trainings")
+                        .header("Authorization", basicAuthHeader("Caller.User", "callerPass")))
+                .andExpect(status().isNotFound());
+
+        verify(gymFacade, never()).getTraineeTrainings(any(), any(), any(), any(), any(), any(), any());
     }
 }

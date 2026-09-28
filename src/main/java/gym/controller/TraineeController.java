@@ -1,16 +1,15 @@
 package gym.controller;
 
 import gym.domain.Trainee;
+import gym.domain.Training;
 import gym.dto.request.ToggleStatusTraineeRequest;
 import gym.dto.request.TraineeRegistrationRequest;
 import gym.dto.request.TraineeTrainerListUpdateRequest;
 import gym.dto.request.TraineeUpdateRequest;
-import gym.dto.response.CredentialsResponse;
-import gym.dto.response.TraineeProfileResponse;
-import gym.dto.response.TraineeTrainerListUpdateResponse;
-import gym.dto.response.TraineeUpdateResponse;
+import gym.dto.response.*;
 import gym.facade.GymFacade;
 import gym.mapper.TraineeMapper;
+import gym.mapper.TrainingMapper;
 import gym.security.Credentials;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +19,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.time.LocalDate;
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("api/trainees")
@@ -152,6 +153,35 @@ public class TraineeController {
                 TraineeMapper.toTrainerListUpdateResponse(updated);
 
         return ResponseEntity.ok(response);
+    }
 
+    // Get Trainee trainings list
+    @GetMapping("/{username}/trainings")
+    @Operation(summary = "Get trainee's trainings list", description = "Returns a filtered list of a trainee's trainings")
+    @ApiResponse(responseCode = "200", description = "Trainings retrieved successfully")
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    @ApiResponse(responseCode = "404", description = "Trainee not found")
+    public ResponseEntity<List<TrainingSummaryResponse>> getTraineeTrainings(
+            Credentials caller,
+            @PathVariable String username,
+            @RequestParam(required = false) LocalDate periodFrom,
+            @RequestParam(required = false) LocalDate periodTo,
+            @RequestParam(required = false) String trainerName,
+            @RequestParam(required = false) String trainingType) {
+
+        // Existence check — throws NoSuchElementException (mapped to 404) if trainee doesn't exist
+        gymFacade.getTrainee(caller.username(), caller.password(), username);
+
+        Date fromDate = TrainingMapper.toDate(periodFrom);
+        Date toDate = TrainingMapper.toDate(periodTo);
+
+        List<Training> trainings = gymFacade.getTraineeTrainings(
+                caller.username(), caller.password(), username, fromDate, toDate, trainerName, trainingType);
+
+        List<TrainingSummaryResponse> response = trainings.stream()
+                .map(TrainingMapper::toSummary)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }
