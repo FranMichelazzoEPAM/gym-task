@@ -15,7 +15,7 @@ public interface TrainerRepository extends JpaRepository<Trainer, UUID> {
     Optional<Trainer> findByUser_Username(@Param("username") String username);
 
     @Query("SELECT t FROM Trainer t LEFT JOIN FETCH t.specialization")
-    List<Trainer> findAll(); // override base method — same fix for getAllTrainers()
+    List<Trainer> findAll();
 
     @Query("""
     SELECT tr
@@ -30,4 +30,6 @@ public interface TrainerRepository extends JpaRepository<Trainer, UUID> {
       )
     """)
     List<Trainer> findUnassignedTrainersForTrainee(@Param("username") String username);
+
+    long countByUser_IsActiveTrue();
 }
