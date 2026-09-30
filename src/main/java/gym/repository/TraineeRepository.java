@@ -12,4 +12,6 @@ public interface TraineeRepository extends JpaRepository<Trainee, UUID> {
     Optional<Trainee> findByUser_Username(String username);
 
     void deleteByUser_Username(String username);
+
+    long countByUser_IsActiveTrue();
 }

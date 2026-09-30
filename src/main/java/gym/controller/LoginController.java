@@ -3,6 +3,7 @@ package gym.controller;
 import gym.dto.request.ChangePasswordRequest;
 import gym.facade.GymFacade;
 import gym.security.Credentials;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,9 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Authentication")
 public class LoginController {
     private final GymFacade gymFacade;
+    private final MeterRegistry meterRegistry;
 
-    public LoginController(GymFacade gymFacade) {
+    public LoginController(GymFacade gymFacade, MeterRegistry meterRegistry) {
         this.gymFacade = gymFacade;
+        this.meterRegistry = meterRegistry;
     }
 
     @GetMapping("/login")
@@ -31,6 +34,9 @@ public class LoginController {
     public ResponseEntity<Void> login(Credentials caller) {
         boolean authenticated = gymFacade.authenticateTrainee(caller.username(), caller.password())
                 || gymFacade.authenticateTrainer(caller.username(), caller.password());
+
+        meterRegistry.counter("gym.login.attempts", "result", authenticated ? "success" : "failure")
+                .increment();
 
         if (!authenticated) {
             throw new SecurityException("Authentication failed for user: " + caller.username());
