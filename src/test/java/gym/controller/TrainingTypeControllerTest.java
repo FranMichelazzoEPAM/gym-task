@@ -2,10 +2,12 @@ package gym.controller;
 
 import gym.domain.TrainingType;
 import gym.facade.GymFacade;
+import gym.testutil.MetricsTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -17,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TrainingTypeController.class)
+@Import(MetricsTestConfig.class)
 class TrainingTypeControllerTest {
 
     @Autowired

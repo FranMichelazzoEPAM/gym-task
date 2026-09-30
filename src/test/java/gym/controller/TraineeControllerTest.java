@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gym.domain.*;
 import gym.dto.request.TraineeRegistrationRequest;
 import gym.facade.GymFacade;
+import gym.testutil.MetricsTestConfig;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -34,6 +36,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(TraineeController.class)
+@Import(MetricsTestConfig.class)
 class TraineeControllerTest {
 
     @Autowired
