@@ -31,3 +31,50 @@ which would be quite a headache at this stage.
 
 Sorry!
 
+## Notes for Spring Boot task
+
+---
+### Database connectivity
+For dev and local profile, I didn't change the H2 database configuration.
+
+For the prod and stg profile, I used a MySQL database. In a real production environment, 
+it should be created and configured properly, but in this task I did this in the mysql command line
+, so the application can connect to it. Here are the commands I used:
+
+```
+CREATE DATABASE gymdb;
+CREATE USER 'gymuser'@'localhost' IDENTIFIED BY 'gympass123';
+GRANT ALL PRIVILEGES ON gymdb.* TO 'gymuser'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+The database is created manually, and the application is configured to connect to it using the `application-prod.properties` file.
+If you run the application with the `prod` profile, it will connect to this MySQL database
+ that you created.
+```
+PS C:\Users\FranciscoMichelazzo> mysql -u gymuser -pgympass123 gymdb -e "SHOW TABLES;"
+mysql: [Warning] Using a password on the command line interface can be insecure.
++------------------+
+| Tables_in_gymdb  |
++------------------+
+| trainee_trainers |
+| trainees         |
+| trainers         |
+| training_types   |
+| trainings        |
+| users            |
++------------------+
+
+```
+And if you want to see the contents of the `training_types` table, you can run the following command:
+```
+PS C:\Users\FranciscoMichelazzo> mysql -u gymuser -pgympass123 gymdb -e "SELECT * FROM training_types;"
+mysql: [Warning] Using a password on the command line interface can be insecure.
+PS C:\Users\FranciscoMichelazzo>
+```
+Notice that the table is empty, as in a production environment, when you initialize the app,
+it shouldn't drop the tables and reinsert the data, but rather use the existing data in the database.
+
+That is my reasoning for not using the `data.sql` file.
+I hope this completes the `Implement support for different environments (local, dev, stg, prod). Use Spring profiles.`
+ task and the `Pay attention that each environment - different db properties.` note.
