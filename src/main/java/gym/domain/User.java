@@ -2,6 +2,7 @@ package gym.domain;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -27,6 +28,10 @@ public class User {
 
     @Column(nullable = false)
     private boolean isActive;
+
+    private int failedAttempts = 0;
+
+    private LocalDateTime lockTime;
 
     public User(String firstName, String lastName, String username, String password, boolean isActive) {
         this.firstName = firstName;
@@ -81,6 +86,14 @@ public class User {
     }
 
     public void toggleActive() { this.isActive = !this.isActive; }
+
+    public int getFailedAttempts() { return failedAttempts; }
+
+    public void setFailedAttempts(int failedAttempts) { this.failedAttempts = failedAttempts; }
+
+    public LocalDateTime getLockTime() { return lockTime; }
+
+    public void setLockTime(LocalDateTime lockTime) { this.lockTime = lockTime; }
 
     public String toString() {
         return
