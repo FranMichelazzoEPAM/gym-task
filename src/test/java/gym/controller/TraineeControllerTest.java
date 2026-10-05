@@ -1,9 +1,11 @@
 package gym.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gym.config.SecurityConfig;
 import gym.domain.*;
 import gym.dto.request.TraineeRegistrationRequest;
 import gym.facade.GymFacade;
+import gym.security.userDetails.CustomUserDetailsService;
 import gym.testutil.MetricsTestConfig;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -36,7 +38,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(TraineeController.class)
-@Import(MetricsTestConfig.class)
+@Import({SecurityConfig.class, MetricsTestConfig.class})
 class TraineeControllerTest {
 
     @Autowired
@@ -47,6 +49,9 @@ class TraineeControllerTest {
 
     @MockBean
     private GymFacade gymFacade;
+
+    @MockBean
+    private CustomUserDetailsService userDetailsService;
 
     @Test
     void registerTrainee_withValidRequest_returns201AndCredentials() throws Exception {

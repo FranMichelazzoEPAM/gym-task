@@ -1,7 +1,9 @@
 package gym.controller;
 
+import gym.config.SecurityConfig;
 import gym.domain.TrainingType;
 import gym.facade.GymFacade;
+import gym.security.userDetails.CustomUserDetailsService;
 import gym.testutil.MetricsTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TrainingTypeController.class)
-@Import(MetricsTestConfig.class)
+@Import({SecurityConfig.class, MetricsTestConfig.class})
 class TrainingTypeControllerTest {
 
     @Autowired
@@ -27,6 +29,9 @@ class TrainingTypeControllerTest {
 
     @MockBean
     private GymFacade gymFacade;
+
+    @MockBean
+    private CustomUserDetailsService userDetailsService;
 
     @Test
     void getAllTrainingTypes_returns200AndList() throws Exception {

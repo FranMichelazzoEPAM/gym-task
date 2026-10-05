@@ -1,9 +1,11 @@
 package gym.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gym.config.SecurityConfig;
 import gym.domain.*;
 import gym.dto.request.TrainerRegistrationRequest;
 import gym.facade.GymFacade;
+import gym.security.userDetails.CustomUserDetailsService;
 import gym.testutil.MetricsTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +33,7 @@ import java.util.Base64;
 import java.util.List;
 
 @WebMvcTest(TrainerController.class)
-@Import(MetricsTestConfig.class)
+@Import({SecurityConfig.class, MetricsTestConfig.class})
 class TrainerControllerTest {
 
     @Autowired
@@ -42,6 +44,9 @@ class TrainerControllerTest {
 
     @MockBean
     private GymFacade gymFacade;
+
+    @MockBean
+    private CustomUserDetailsService userDetailsService;
 
     @Test
     void registerTrainer_withValidRequest_returns201AndCredentials() throws Exception {

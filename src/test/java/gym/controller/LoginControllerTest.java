@@ -1,6 +1,8 @@
 package gym.controller;
 
+import gym.config.SecurityConfig;
 import gym.facade.GymFacade;
+import gym.security.userDetails.CustomUserDetailsService;
 import gym.testutil.MetricsTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(LoginController.class)
-@Import(MetricsTestConfig.class)
+@Import({SecurityConfig.class, MetricsTestConfig.class})
 class LoginControllerTest {
 
     @Autowired
@@ -24,6 +26,9 @@ class LoginControllerTest {
 
     @MockBean
     private GymFacade gymFacade;
+
+    @MockBean
+    private CustomUserDetailsService userDetailsService;
 
     private String basicAuthHeader(String username, String password) {
         String credentials = username + ":" + password;
