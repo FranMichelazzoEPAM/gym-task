@@ -5,7 +5,7 @@ import gym.config.SecurityConfig;
 import gym.domain.*;
 import gym.dto.request.TrainerRegistrationRequest;
 import gym.facade.GymFacade;
-import gym.security.userDetails.CustomUserDetailsService;
+import gym.security.service.CustomUserDetailsService;
 import gym.testutil.MetricsTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

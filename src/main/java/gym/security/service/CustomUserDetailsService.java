@@ -1,15 +1,18 @@
-package gym.security.userDetails;
+package gym.security.service;
 
 import gym.domain.Trainee;
 import gym.domain.Trainer;
 import gym.repository.TraineeRepository;
 import gym.repository.TrainerRepository;
+import gym.security.userDetails.CustomUserDetails;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Service
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final TraineeRepository traineeRepository;

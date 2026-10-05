@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface TrainerRepository extends JpaRepository<Trainer, UUID> {
 
-    @Query("SELECT t FROM Trainer t LEFT JOIN FETCH t.specialization WHERE t.user.username = :username")
+    @Query("SELECT t FROM Trainer t JOIN FETCH t.user LEFT JOIN FETCH t.specialization WHERE t.user.username = :username")
     Optional<Trainer> findByUser_Username(@Param("username") String username);
 
     @Query("SELECT t FROM Trainer t LEFT JOIN FETCH t.specialization")

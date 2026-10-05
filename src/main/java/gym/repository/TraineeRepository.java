@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface TraineeRepository extends JpaRepository<Trainee, UUID> {
-    @EntityGraph(attributePaths = {"trainers", "trainers.specialization"})
+    @EntityGraph(attributePaths = {"user", "trainers", "trainers.specialization"})
     Optional<Trainee> findByUser_Username(String username);
 
     void deleteByUser_Username(String username);

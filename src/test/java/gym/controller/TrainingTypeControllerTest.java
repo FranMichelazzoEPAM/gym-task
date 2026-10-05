@@ -3,7 +3,7 @@ package gym.controller;
 import gym.config.SecurityConfig;
 import gym.domain.TrainingType;
 import gym.facade.GymFacade;
-import gym.security.userDetails.CustomUserDetailsService;
+import gym.security.service.CustomUserDetailsService;
 import gym.testutil.MetricsTestConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
