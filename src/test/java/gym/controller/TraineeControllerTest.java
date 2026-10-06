@@ -1,15 +1,16 @@
 package gym.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import gym.config.SecurityConfig;
 import gym.domain.*;
 import gym.dto.request.TraineeRegistrationRequest;
 import gym.facade.GymFacade;
+import gym.security.jwt.JwtUtil;
 import gym.security.service.CustomUserDetailsService;
 import gym.testutil.MetricsTestConfig;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -33,11 +34,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import static org.mockito.Mockito.never;
 
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @WebMvcTest(TraineeController.class)
-@Import({SecurityConfig.class, MetricsTestConfig.class})
+@AutoConfigureMockMvc(addFilters = false)
+@Import(MetricsTestConfig.class)
 class TraineeControllerTest {
 
     @Autowired
@@ -50,7 +51,10 @@ class TraineeControllerTest {
     private GymFacade gymFacade;
 
     @MockBean
-    private CustomUserDetailsService userDetailsService;
+    private JwtUtil jwtUtil;
+
+    @MockBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @Test
     void registerTrainee_withValidRequest_returns201AndCredentials() throws Exception {
