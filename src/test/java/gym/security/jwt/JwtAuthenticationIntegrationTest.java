@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -82,6 +83,46 @@ class JwtAuthenticationIntegrationTest {
 
         mockMvc.perform(get("/api/training-types")
                         .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logout_blacklistsTokenAndRejectsItsReuse() throws Exception {
+        String token = jwtUtil.generateToken(username, "TRAINEE");
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/training-types")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logout_rejectsMissingToken() throws Exception {
+        mockMvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logout_rejectsInvalidBearerToken() throws Exception {
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer invalid-token"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logout_rejectsNonBearerAuthorizationHeader() throws Exception {
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Basic credentials"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logout_rejectsMalformedBearerToken() throws Exception {
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer not-a-jwt"))
                 .andExpect(status().isUnauthorized());
     }
 }

@@ -13,9 +13,9 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -81,16 +81,23 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, LogoutFilter.class)
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
                         .addLogoutHandler((request, response, authentication) -> {
                             String header = request.getHeader("Authorization");
-                            if (header != null && header.startsWith("Bearer ")) {
+                            if (authentication != null && authentication.isAuthenticated()
+                                    && header != null && header.startsWith("Bearer ")) {
                                 tokenBlacklistService.blacklist(header.substring(7));
                             }
                         })
-                        .logoutSuccessHandler((req, res, auth) -> res.setStatus(HttpServletResponse.SC_OK))
+                        .logoutSuccessHandler((req, res, authentication) -> {
+                            if (authentication == null || !authentication.isAuthenticated()) {
+                                res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                                return;
+                            }
+                            res.setStatus(HttpServletResponse.SC_OK);
+                        })
                 );
 
         return http.build();

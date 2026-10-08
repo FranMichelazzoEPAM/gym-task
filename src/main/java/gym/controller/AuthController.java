@@ -20,15 +20,15 @@ import org.springframework.http.ResponseEntity;
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication")
-public class LoginController {
+public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final GymFacade gymFacade;
     private final MeterRegistry meterRegistry;
 
-    public LoginController(AuthenticationManager authenticationManager,
-            JwtUtil jwtUtil, GymFacade gymFacade, MeterRegistry meterRegistry) {
+    public AuthController(AuthenticationManager authenticationManager,
+                          JwtUtil jwtUtil, GymFacade gymFacade, MeterRegistry meterRegistry) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.gymFacade = gymFacade;
