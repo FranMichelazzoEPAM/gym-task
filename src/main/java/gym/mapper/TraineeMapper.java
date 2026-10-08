@@ -6,7 +6,6 @@ import gym.dto.response.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -21,10 +20,10 @@ public class TraineeMapper {
         return Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
-    public static CredentialsResponse toCredentialsResponse(Trainee trainee) {
+    public static CredentialsResponse toCredentialsResponse(Trainee trainee, String rawPassword) {
         return new CredentialsResponse(
                 trainee.getUser().getUsername(),
-                trainee.getUser().getPassword()
+                rawPassword
         );
     }
 

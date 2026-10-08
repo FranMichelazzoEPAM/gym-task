@@ -6,6 +6,8 @@ import gym.domain.Training;
 import gym.domain.TrainingType;
 import gym.repository.TrainingRepository;
 import gym.repository.TrainingTypeRepository;
+import gym.service.result.TraineeRegistrationResult;
+import gym.service.result.TrainerRegistrationResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,18 +38,17 @@ class GymFacadeIntegrationTest {
         TrainingType type = trainingTypeRepository.findByTrainingTypeName("Cardio").orElseGet(() -> trainingTypeRepository.save(new TrainingType("Cardio")));
 
         // Create trainer (no auth required)
-        Trainer trainer = gymFacade.createTrainer("Tom", "Trainer", type);
+        TrainerRegistrationResult trainerResult = gymFacade.createTrainer("Tom", "Trainer", type);
+        Trainer trainer = trainerResult.trainer();
         assertThat(trainer.getUser()).isNotNull();
         String trainerUser = trainer.getUser().getUsername();
-        String trainerPass = trainer.getUser().getPassword();
 
         // Create trainee (no auth required)
-        Trainee trainee = gymFacade.createTrainee("Jane", "Doe", null, null);
+        TraineeRegistrationResult traineeResult = gymFacade.createTrainee("Jane", "Doe", null, null);
+        Trainee trainee = traineeResult.trainee();
         String traineeUser = trainee.getUser().getUsername();
-        String traineePass = trainee.getUser().getPassword();
 
-        // Create training using trainer credentials as caller
-        Training created = gymFacade.createTraining(trainerUser, trainerPass,
+        Training created = gymFacade.createTraining(
                 traineeUser, trainerUser, "Session1", type, new Date(), 30);
 
         List<Training> all = trainingRepository.findAll();
@@ -56,8 +57,7 @@ class GymFacadeIntegrationTest {
         // Delete training entries first to avoid FK issues in this test environment
         trainingRepository.deleteAll();
 
-        // Delete trainee using trainer credentials (authenticated)
-        gymFacade.deleteTrainee(trainerUser, trainerPass, traineeUser);
+        gymFacade.deleteTrainee(traineeUser);
 
         // After delete, trainings should be cascaded removed (already deleted)
         assertThat(trainingRepository.findAll()).isEmpty();

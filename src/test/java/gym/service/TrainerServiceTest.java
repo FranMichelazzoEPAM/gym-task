@@ -8,12 +8,13 @@ import gym.repository.TraineeRepository;
 import gym.repository.TrainerRepository;
 import gym.repository.TrainingTypeRepository;
 import gym.service.impl.TrainerServiceImpl;
-import gym.service.impl.UserServiceImpl;
+import gym.service.result.TrainerRegistrationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -37,8 +38,7 @@ class TrainerServiceTest {
     private PasswordGenerationService passwordGenerationService;
 
     private TrainerServiceImpl trainerService;
-
-    private UserServiceImpl userService;
+    private PasswordEncoder passwordEncoder;
 
     private TrainingType managedType;
 
@@ -56,12 +56,15 @@ class TrainerServiceTest {
             @Override
             public String generateRandomPassword() { return "pwd"; }
         };
+        passwordEncoder = Mockito.mock(PasswordEncoder.class);
+        when(passwordEncoder.encode("pwd")).thenReturn("encoded-pwd");
         trainerService = new TrainerServiceImpl(
                 trainerRepository,
                 traineeRepository,
                 trainingTypeRepository,
                 usernameGenerationService,
-                passwordGenerationService);
+                passwordGenerationService,
+                passwordEncoder);
 
         managedType = new TrainingType("Cardio");
     }
@@ -74,10 +77,13 @@ class TrainerServiceTest {
         ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
         when(trainerRepository.save(captor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Trainer result = trainerService.createTrainer("John", "Doe", managedType);
+        TrainerRegistrationResult result = trainerService.createTrainer("John", "Doe", managedType);
 
-        assertThat(result.getUser().getUsername()).isEqualTo("jdoe");
-        assertThat(result.getUser().getPassword()).isEqualTo("pwd");
+        assertThat(result.trainer().getUser().getUsername()).isEqualTo("jdoe");
+        assertThat(result.trainer().getUser().getPassword()).isEqualTo("encoded-pwd");
+        assertThat(result.rawPassword()).isEqualTo("pwd");
+        assertThat(captor.getValue().getUser().getPassword()).isEqualTo("encoded-pwd");
+        verify(passwordEncoder).encode("pwd");
         verify(trainerRepository, times(1)).save(any());
     }
 

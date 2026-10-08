@@ -19,10 +19,13 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, CustomUserDetailsService userDetailsService,
+                                   TokenBlacklistService tokenBlacklistService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -38,22 +41,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
+        if (tokenBlacklistService.isBlacklisted(token)) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token invalidated (loged out)");
+            return;
+        }
+
         try {
             String username = jwtUtil.extractUsername(token);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 if (jwtUtil.validateToken(token, userDetails)) {
                     var authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities()
-                    );
+                            userDetails, null, userDetails.getAuthorities());
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
         } catch (JwtException ignored) {
-            // invalid/expired token - leave request unauthenticated
-            // downstream authorization rules will reject if the endpoint requires auth
+            // invalid/expired token - leave unauthenticated
         }
+
         filterChain.doFilter(request, response);
     }
 }

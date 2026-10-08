@@ -2,11 +2,12 @@ package gym.service;
 
 import gym.domain.Trainer;
 import gym.domain.TrainingType;
+import gym.service.result.TrainerRegistrationResult;
 
 import java.util.List;
 
 public interface TrainerService {
-    Trainer createTrainer(String firstName, String lastName, TrainingType specialization);
+    TrainerRegistrationResult createTrainer(String firstName, String lastName, TrainingType specialization);
     Trainer updateTrainer(Trainer trainer);
     Trainer getTrainerByUsername(String username);
     List<Trainer> getAllTrainers();

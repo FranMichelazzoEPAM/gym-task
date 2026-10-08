@@ -8,10 +8,10 @@ import java.util.List;
 public class TrainerMapper {
     private TrainerMapper() {}
 
-    public static CredentialsResponse toCredentialsResponse(Trainer trainer) {
+    public static CredentialsResponse toCredentialsResponse(Trainer trainer, String rawPassword) {
         return new CredentialsResponse(
                 trainer.getUser().getUsername(),
-                trainer.getUser().getPassword()
+                rawPassword
         );
     }
 

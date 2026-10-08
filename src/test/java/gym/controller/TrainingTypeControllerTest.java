@@ -3,6 +3,7 @@ package gym.controller;
 import gym.domain.TrainingType;
 import gym.facade.GymFacade;
 import gym.security.jwt.JwtUtil;
+import gym.security.jwt.TokenBlacklistService;
 import gym.security.service.CustomUserDetailsService;
 import gym.testutil.MetricsTestConfig;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,9 @@ class TrainingTypeControllerTest {
 
     @MockBean
     private CustomUserDetailsService customUserDetailsService;
+
+    @MockBean
+    private TokenBlacklistService tokenBlacklistService;
 
     @Test
     void getAllTrainingTypes_returns200AndList() throws Exception {

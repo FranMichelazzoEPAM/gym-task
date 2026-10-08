@@ -9,9 +9,12 @@ import gym.repository.TrainingTypeRepository;
 import gym.service.PasswordGenerationService;
 import gym.service.TrainerService;
 import gym.service.UsernameGenerationService;
+import gym.service.result.TrainerRegistrationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -26,24 +29,27 @@ public class TrainerServiceImpl implements TrainerService {
     private final TrainingTypeRepository trainingTypeRepository;
     private final UsernameGenerationService usernameGenerationService;
     private final PasswordGenerationService passwordGenerationService;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
     public TrainerServiceImpl(TrainerRepository trainerRepository,
                               TraineeRepository traineeRepository,
                               TrainingTypeRepository trainingTypeRepository,
                               UsernameGenerationService usernameGenerationService,
-                              PasswordGenerationService passwordGenerationService) {
+                              PasswordGenerationService passwordGenerationService,
+                              PasswordEncoder passwordEncoder) {
         this.trainerRepository = trainerRepository;
         this.traineeRepository = traineeRepository;
         this.trainingTypeRepository = trainingTypeRepository;
         this.usernameGenerationService = usernameGenerationService;
         this.passwordGenerationService = passwordGenerationService;
+        this.passwordEncoder = passwordEncoder;
         LOG.info("TrainerServiceImpl dependencies injected");
     }
 
     @Override
     @Transactional
-    public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
+    public TrainerRegistrationResult createTrainer(String firstName, String lastName, TrainingType specialization) {
         LOG.debug("Creating trainer: {} {}", firstName, lastName);
 
         if (specialization == null) {
@@ -59,14 +65,15 @@ public class TrainerServiceImpl implements TrainerService {
                 });
 
         String username = usernameGenerationService.generateUsername(firstName, lastName);
-        String password = passwordGenerationService.generateRandomPassword();
-        User user = new User(firstName, lastName, username, password, true);
+        String rawPassword = passwordGenerationService.generateRandomPassword();
+        String encodedPassword = passwordEncoder.encode(rawPassword);
+        User user = new User(firstName, lastName, username, encodedPassword, true);
 
         Trainer trainer = new Trainer(user, managedType);
         trainerRepository.save(trainer);
         LOG.info("Created trainer: {} (id={})", username, trainer.getTrainerId());
 
-        return trainer;
+        return new TrainerRegistrationResult(trainer, rawPassword);
     }
 
     @Override

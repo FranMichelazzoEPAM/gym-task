@@ -4,10 +4,11 @@ import gym.domain.Trainee;
 import gym.domain.Trainer;
 import gym.domain.Training;
 import gym.domain.TrainingType;
+import gym.service.result.TraineeRegistrationResult;
+import gym.service.result.TrainerRegistrationResult;
 
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 public interface GymFacade {
 
@@ -15,36 +16,26 @@ public interface GymFacade {
     void changePassword(String username, String oldPassword, String newPassword);
 
     // Trainees
-    Trainee createTrainee(String firstName, String lastName, Date dateOfBirth, String address);
-    Trainee updateTrainee(String callerUsername, String callerPassword, Trainee trainee);
-    void deleteTrainee(String callerUsername, String callerPassword, String username);
-    Trainee getTrainee(String callerUsername, String callerPassword, String username);
-    List<Trainee> getAllTrainees(String callerUsername, String callerPassword);
-    boolean authenticateTrainee(String username, String password);
-    void updateTraineeActiveStatus(String callerUsername, String callerPassword, String username, boolean active);
-    Trainee updateTraineeTrainersList(String callerUsername, String callerPassword,
-                                      String traineeUsername, List<String> trainerUsernames);
+    TraineeRegistrationResult createTrainee(String firstName, String lastName, Date dateOfBirth, String address);
+    Trainee updateTrainee(Trainee trainee);
+    void deleteTrainee(String username);
+    Trainee getTrainee(String username);
+    void updateTraineeActiveStatus(String username, boolean active);
+    Trainee updateTraineeTrainersList(String traineeUsername, List<String> trainerUsernames);
 
     // Trainers
-    Trainer createTrainer(String firstName, String lastName, TrainingType specialization);
-    Trainer updateTrainer(String callerUsername, String callerPassword, Trainer trainer);
-    Trainer getTrainer(String callerUsername, String callerPassword, String username);
-    List<Trainer> getAllTrainers(String callerUsername, String callerPassword);
-    boolean authenticateTrainer(String username, String password);
-    void updateTrainerActiveStatus(String callerUsername, String callerPassword, String username, boolean active);
-    List<Trainer> getTrainersNotAssignedToTrainee(String callerUsername, String callerPassword, String traineeUsername);
+    TrainerRegistrationResult createTrainer(String firstName, String lastName, TrainingType specialization);
+    Trainer updateTrainer(Trainer trainer);
+    Trainer getTrainer(String username);
+    void updateTrainerActiveStatus(String username, boolean active);
+    List<Trainer> getTrainersNotAssignedToTrainee(String traineeUsername);
 
     // Trainings
-    Training createTraining(String callerUsername, String callerPassword,
-                            String traineeUsername, String trainerUsername, String trainingName,
+    Training createTraining(String traineeUsername, String trainerUsername, String trainingName,
                             TrainingType trainingType, Date trainingDate, int trainingDuration);
-    Training getTraining(String callerUsername, String callerPassword, UUID trainingId);
-    List<Training> getAllTrainings(String callerUsername, String callerPassword);
-    List<Training> getTraineeTrainings(String callerUsername, String callerPassword,
-                                       String traineeUsername, Date fromDate, Date toDate,
+    List<Training> getTraineeTrainings(String traineeUsername, Date fromDate, Date toDate,
                                        String trainerName, String trainingTypeName);
-    List<Training> getTrainerTrainings(String callerUsername, String callerPassword,
-                                       String trainerUsername, Date fromDate, Date toDate,
+    List<Training> getTrainerTrainings(String trainerUsername, Date fromDate, Date toDate,
                                        String traineeName);
 
     // TrainingTypes

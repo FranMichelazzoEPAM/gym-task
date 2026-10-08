@@ -1,12 +1,13 @@
 package gym.service;
 
 import gym.domain.Trainee;
+import gym.service.result.TraineeRegistrationResult;
 
 import java.util.Date;
 import java.util.List;
 
 public interface TraineeService {
-    Trainee createTrainee(String firstName, String lastName, Date dateOfBirth, String address);
+    TraineeRegistrationResult createTrainee(String firstName, String lastName, Date dateOfBirth, String address);
     Trainee updateTrainee(Trainee trainee);
     void deleteTraineeByUsername(String username);
     Trainee getTraineeByUsername(String username);

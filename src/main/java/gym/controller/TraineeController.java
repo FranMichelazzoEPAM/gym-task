@@ -10,7 +10,7 @@ import gym.dto.response.*;
 import gym.facade.GymFacade;
 import gym.mapper.TraineeMapper;
 import gym.mapper.TrainingMapper;
-import gym.security.Credentials;
+import gym.service.result.TraineeRegistrationResult;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -43,14 +43,15 @@ public class TraineeController {
 
         Date dateOfBirth = TraineeMapper.toDate(request.getDateOfBirth());
 
-        Trainee createdTrainee = gymFacade.createTrainee(
+        TraineeRegistrationResult createdTrainee = gymFacade.createTrainee(
                 request.getFirstName(),
                 request.getLastName(),
                 dateOfBirth,
                 request.getAddress()
         );
 
-        CredentialsResponse response = TraineeMapper.toCredentialsResponse(createdTrainee);
+        CredentialsResponse response = TraineeMapper.toCredentialsResponse(
+                createdTrainee.trainee(), createdTrainee.rawPassword());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -60,8 +61,8 @@ public class TraineeController {
     @ApiResponse(responseCode = "204", description = "Trainee deleted successfully")
     @ApiResponse(responseCode = "401", description = "Invalid or missing credentials")
     @ApiResponse(responseCode = "404", description = "Trainee not found")
-    public ResponseEntity<Void> deleteTrainee(@PathVariable String username, Credentials caller) {
-        gymFacade.deleteTrainee(caller.username(), caller.password(), username);
+    public ResponseEntity<Void> deleteTrainee(@PathVariable String username) {
+        gymFacade.deleteTrainee(username);
         return ResponseEntity.noContent().build();
     }
 
@@ -73,11 +74,9 @@ public class TraineeController {
     @ApiResponse(responseCode = "401", description = "Invalid or missing credentials")
     @ApiResponse(responseCode = "404", description = "Trainee not found")
     public ResponseEntity<Void> updateTraineeStatus(
-            @Valid @RequestBody ToggleStatusTraineeRequest request,
-            Credentials caller) {
+            @Valid @RequestBody ToggleStatusTraineeRequest request) {
 
-        gymFacade.updateTraineeActiveStatus(caller.username(),
-                caller.password(),
+        gymFacade.updateTraineeActiveStatus(
                 request.getUsername(),
                 request.getActive());
 
@@ -91,9 +90,9 @@ public class TraineeController {
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @ApiResponse(responseCode = "404", description = "Trainee not found")
     public ResponseEntity<TraineeProfileResponse> getTrainee(
-            Credentials caller, @PathVariable String username) {
+            @PathVariable String username) {
 
-        Trainee trainee = gymFacade.getTrainee(caller.username(), caller.password(), username);
+        Trainee trainee = gymFacade.getTrainee(username);
         TraineeProfileResponse response = TraineeMapper.toProfileResponse(trainee);
         return ResponseEntity.ok(response);
     }
@@ -106,11 +105,10 @@ public class TraineeController {
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @ApiResponse(responseCode = "404", description = "Trainee not found")
     public ResponseEntity<TraineeUpdateResponse> updateTrainee(
-            Credentials caller,
             @PathVariable String username,
             @Valid @RequestBody TraineeUpdateRequest request ) {
 
-        Trainee existing = gymFacade.getTrainee(caller.username(), caller.password(), username);
+        Trainee existing = gymFacade.getTrainee(username);
 
         existing.getUser().setFirstName(request.getFirstName());
         existing.getUser().setLastName(request.getLastName());
@@ -122,8 +120,8 @@ public class TraineeController {
             existing.setAddress(request.getAddress());
         }
 
-        Trainee updated = gymFacade.updateTrainee(caller.username(), caller.password(), existing);
-        gymFacade.updateTraineeActiveStatus(caller.username(), caller.password(), username, request.getActive());
+        Trainee updated = gymFacade.updateTrainee(existing);
+        gymFacade.updateTraineeActiveStatus(username, request.getActive());
 
         if (updated.getUser().isActive() != request.getActive()) {
             updated.getUser().toggleActive();
@@ -141,12 +139,11 @@ public class TraineeController {
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @ApiResponse(responseCode = "404", description = "Trainee not found")
     public ResponseEntity<TraineeTrainerListUpdateResponse> updateTraineeTrainersList(
-            Credentials caller,
             @PathVariable String username,
             @Valid @RequestBody TraineeTrainerListUpdateRequest request) {
 
         Trainee updated = gymFacade.updateTraineeTrainersList(
-                caller.username(), caller.password(), username, request.getTrainersUsernames()
+                username, request.getTrainersUsernames()
         );
 
         TraineeTrainerListUpdateResponse response =
@@ -162,7 +159,6 @@ public class TraineeController {
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @ApiResponse(responseCode = "404", description = "Trainee not found")
     public ResponseEntity<List<TraineeTrainingSummaryResponse>> getTraineeTrainings(
-            Credentials caller,
             @PathVariable String username,
             @RequestParam(required = false) LocalDate periodFrom,
             @RequestParam(required = false) LocalDate periodTo,
@@ -170,13 +166,13 @@ public class TraineeController {
             @RequestParam(required = false) String trainingType) {
 
         // Existence check — throws NoSuchElementException (mapped to 404) if trainee doesn't exist
-        gymFacade.getTrainee(caller.username(), caller.password(), username);
+        gymFacade.getTrainee(username);
 
         Date fromDate = TrainingMapper.toDate(periodFrom);
         Date toDate = TrainingMapper.toDate(periodTo);
 
         List<Training> trainings = gymFacade.getTraineeTrainings(
-                caller.username(), caller.password(), username, fromDate, toDate, trainerName, trainingType);
+                username, fromDate, toDate, trainerName, trainingType);
 
         List<TraineeTrainingSummaryResponse> response = trainings.stream()
                 .map(TrainingMapper::toSummary)

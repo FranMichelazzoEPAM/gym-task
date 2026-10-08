@@ -10,7 +10,7 @@ import gym.dto.response.*;
 import gym.facade.GymFacade;
 import gym.mapper.TrainerMapper;
 import gym.mapper.TrainingMapper;
-import gym.security.Credentials;
+import gym.service.result.TrainerRegistrationResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,13 +45,14 @@ public class TrainerController {
         TrainingType trainingType =
                 gymFacade.getTrainingTypeByName(request.getSpecialization());
 
-        Trainer createdTrainer = gymFacade.createTrainer(
+        TrainerRegistrationResult createdTrainer = gymFacade.createTrainer(
                 request.getFirstName(),
                 request.getLastName(),
                 trainingType
         );
 
-        CredentialsResponse response = TrainerMapper.toCredentialsResponse(createdTrainer);
+        CredentialsResponse response = TrainerMapper.toCredentialsResponse(
+                createdTrainer.trainer(), createdTrainer.rawPassword());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -63,11 +64,9 @@ public class TrainerController {
     @ApiResponse(responseCode = "401", description = "Invalid or missing credentials")
     @ApiResponse(responseCode = "404", description = "Trainer not found")
     public ResponseEntity<Void> updateTrainerStatus(
-            @Valid @RequestBody ToggleStatusTrainerRequest request,
-            Credentials caller) {
+            @Valid @RequestBody ToggleStatusTrainerRequest request) {
 
-        gymFacade.updateTrainerActiveStatus(caller.username(),
-                caller.password(),
+        gymFacade.updateTrainerActiveStatus(
                 request.getUsername(),
                 request.getActive());
 
@@ -82,10 +81,9 @@ public class TrainerController {
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @ApiResponse(responseCode = "404", description = "Trainer not found")
     public ResponseEntity<TrainerProfileResponse> getTrainer(
-            Credentials caller,
             @PathVariable String username) {
 
-        Trainer trainer = gymFacade.getTrainer(caller.username(), caller.password(), username);
+        Trainer trainer = gymFacade.getTrainer(username);
         TrainerProfileResponse response = TrainerMapper.toProfileResponse(trainer);
 
         return ResponseEntity.ok(response);
@@ -99,32 +97,26 @@ public class TrainerController {
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @ApiResponse(responseCode = "404", description = "Trainer not found")
     public ResponseEntity<TrainerUpdateResponse> updateTrainer(
-            Credentials caller,
             @PathVariable String username,
             @Valid @RequestBody TrainerUpdateRequest request) {
 
-        Trainer existing = gymFacade.getTrainer(caller.username(), caller.password(), username);
+        Trainer existing = gymFacade.getTrainer(username);
         TrainingType specialization = gymFacade.getTrainingTypeByName(request.getSpecialization());
 
         existing.getUser().setFirstName(request.getFirstName());
         existing.getUser().setLastName(request.getLastName());
         existing.setSpecialization(specialization);
 
-        Trainer updatedTrainer = gymFacade.updateTrainer(caller.username(), caller.password(), existing);
+        Trainer updatedTrainer = gymFacade.updateTrainer(existing);
 
-        gymFacade.updateTrainerActiveStatus(caller.username(),
-                caller.password(),
-                username,
-                request.isActive());
+        gymFacade.updateTrainerActiveStatus(username, request.isActive());
 
         if (updatedTrainer.getUser().isActive() != request.isActive()) {
             updatedTrainer.getUser().toggleActive();
         }
 
         TrainerUpdateResponse response = TrainerMapper.toUpdateResponse(updatedTrainer);
-
         return ResponseEntity.ok(response);
-
     }
 
     // Get not assigned on trainee active trainers
@@ -134,11 +126,9 @@ public class TrainerController {
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @ApiResponse(responseCode = "404", description = "Trainee not found")
     public ResponseEntity<List<TrainerSummaryResponse>> getNotAssignedOnTraineeActiveTrainers(
-            Credentials caller,
             @PathVariable String username) {
 
-        List<Trainer> trainers = gymFacade.getTrainersNotAssignedToTrainee(
-                caller.username(), caller.password(), username);
+        List<Trainer> trainers = gymFacade.getTrainersNotAssignedToTrainee(username);
 
         List<TrainerSummaryResponse> response = trainers.stream()
                 .map(TrainerMapper::toSummary)
@@ -154,20 +144,19 @@ public class TrainerController {
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @ApiResponse(responseCode = "404", description = "Trainer not found")
     public ResponseEntity<List<TrainerTrainingSummaryResponse>> getTrainerTrainings(
-            Credentials caller,
             @PathVariable String username,
             @RequestParam(required = false) LocalDate periodFrom,
             @RequestParam(required = false) LocalDate periodTo,
             @RequestParam(required = false) String traineeName) {
 
         // Existence check — same pattern as the Trainee version, kept for consistency
-        gymFacade.getTrainer(caller.username(), caller.password(), username);
+        gymFacade.getTrainer(username);
 
         Date fromDate = TrainingMapper.toDate(periodFrom);
         Date toDate = TrainingMapper.toDate(periodTo);
 
         List<Training> trainings = gymFacade.getTrainerTrainings(
-                caller.username(), caller.password(), username, fromDate, toDate, traineeName);
+                username, fromDate, toDate, traineeName);
 
         List<TrainerTrainingSummaryResponse> response = trainings.stream()
                 .map(TrainingMapper::toTrainerSummary)
@@ -175,5 +164,4 @@ public class TrainerController {
 
         return ResponseEntity.ok(response);
     }
-
 }

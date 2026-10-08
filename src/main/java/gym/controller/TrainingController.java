@@ -1,16 +1,13 @@
 package gym.controller;
 
-import gym.domain.Training;
 import gym.domain.TrainingType;
 import gym.dto.request.TrainingRegistrationRequest;
 import gym.facade.GymFacade;
 import gym.mapper.TrainingMapper;
-import gym.security.Credentials;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,20 +34,15 @@ public class TrainingController {
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @ApiResponse(responseCode = "404", description = "Trainee or trainer not found")
     public ResponseEntity<Void> addTraining(
-            Credentials caller,
             @Valid @RequestBody TrainingRegistrationRequest request) {
 
         TrainingType trainingType = gymFacade.getTrainer(
-                caller.username(),
-                caller.password(),
                 request.getTrainerUsername())
                 .getSpecialization();
 
         Date trainingDate = TrainingMapper.toDate(request.getDate());
 
         gymFacade.createTraining(
-                caller.username(),
-                caller.password(),
                 request.getTraineeUsername(),
                 request.getTrainerUsername(),
                 request.getName(),

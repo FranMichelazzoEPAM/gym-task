@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -16,7 +18,6 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -105,5 +106,26 @@ public class GlobalExceptionHandler {
         meterRegistry.counter("gym.errors", "type", "not_found").increment();
         ErrorResponse response = new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Resource not found", null);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(LockedException.class)
+    public ResponseEntity<ErrorResponse> handleLocked(LockedException ex) {
+        meterRegistry.counter("gym.errors", "type", "locked").increment();
+        meterRegistry.counter("gym.login.attempts", "result", "failure").increment();
+        LOG.warn("Account locked: {}", ex.getMessage());
+
+        ErrorResponse response = new ErrorResponse(HttpStatus.LOCKED.value(),
+                "Account locked due to multiple failed login attempts. Try again in 5 minutes.", null);
+        return ResponseEntity.status(HttpStatus.LOCKED).body(response);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
+        meterRegistry.counter("gym.errors", "type", "unauthorized").increment();
+        meterRegistry.counter("gym.login.attempts", "result", "failure").increment();
+        LOG.warn("Authentication failed: {}", ex.getMessage());
+
+        ErrorResponse response = new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Invalid username or password", null);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 }

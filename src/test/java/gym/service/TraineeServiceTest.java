@@ -7,11 +7,12 @@ import gym.domain.User;
 import gym.repository.TraineeRepository;
 import gym.repository.TrainerRepository;
 import gym.service.impl.TraineeServiceImpl;
-import gym.service.impl.UserServiceImpl;
+import gym.service.result.TraineeRegistrationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -34,7 +35,7 @@ class TraineeServiceTest {
     private PasswordGenerationService passwordGenerationService;
 
     private TraineeServiceImpl traineeService;
-    private UserServiceImpl userService;
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
@@ -46,15 +47,25 @@ class TraineeServiceTest {
         passwordGenerationService = new PasswordGenerationService() {
             @Override public String generateRandomPassword() { return "pwd"; }
         };
-        traineeService = new TraineeServiceImpl(traineeRepository, trainerRepository, usernameGenerationService, passwordGenerationService);
+        passwordEncoder = Mockito.mock(PasswordEncoder.class);
+        when(passwordEncoder.encode("pwd")).thenReturn("encoded-pwd");
+        traineeService = new TraineeServiceImpl(
+                traineeRepository,
+                trainerRepository,
+                usernameGenerationService,
+                passwordGenerationService,
+                passwordEncoder);
     }
 
     @Test
-    @DisplayName("createTrainee persists and returns trainee")
+    @DisplayName("createTrainee persists an encoded password and returns raw credentials")
     void createTrainee() {
         when(traineeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        Trainee t = traineeService.createTrainee("A","B", null, null);
-        assertThat(t.getUser().getUsername()).isEqualTo("tuser");
+        TraineeRegistrationResult result = traineeService.createTrainee("A","B", null, null);
+        assertThat(result.trainee().getUser().getUsername()).isEqualTo("tuser");
+        assertThat(result.trainee().getUser().getPassword()).isEqualTo("encoded-pwd");
+        assertThat(result.rawPassword()).isEqualTo("pwd");
+        verify(passwordEncoder).encode("pwd");
     }
 
     @Test

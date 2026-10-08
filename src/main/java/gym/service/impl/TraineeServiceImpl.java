@@ -8,9 +8,12 @@ import gym.repository.TrainerRepository;
 import gym.service.PasswordGenerationService;
 import gym.service.TraineeService;
 import gym.service.UsernameGenerationService;
+import gym.service.result.TraineeRegistrationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,33 +30,37 @@ public class TraineeServiceImpl implements TraineeService {
     private final TrainerRepository trainerRepository;
     private final UsernameGenerationService usernameGenerationService;
     private final PasswordGenerationService passwordGenerationService;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
     public TraineeServiceImpl(TraineeRepository traineeRepository,
                               TrainerRepository trainerRepository,
                               UsernameGenerationService usernameGenerationService,
-                              PasswordGenerationService passwordGenerationService) {
+                              PasswordGenerationService passwordGenerationService,
+                              PasswordEncoder passwordEncoder) {
         this.traineeRepository = traineeRepository;
         this.trainerRepository = trainerRepository;
         this.usernameGenerationService = usernameGenerationService;
         this.passwordGenerationService = passwordGenerationService;
+        this.passwordEncoder = passwordEncoder;
         LOG.info("TraineeServiceImpl dependencies injected");
     }
 
     @Override
     @Transactional
-    public Trainee createTrainee(String firstName, String lastName, Date dateOfBirth, String address) {
+    public TraineeRegistrationResult createTrainee(String firstName, String lastName, Date dateOfBirth, String address) {
         LOG.debug("Creating trainee: {} {}", firstName, lastName);
 
         String username = usernameGenerationService.generateUsername(firstName, lastName);
-        String password = passwordGenerationService.generateRandomPassword();
+        String rawPassword = passwordGenerationService.generateRandomPassword();
+        String encodedPassword = passwordEncoder.encode(rawPassword);
 
-        User user = new User(firstName, lastName, username, password, true);
+        User user = new User(firstName, lastName, username, encodedPassword, true);
         Trainee trainee = new Trainee(user, dateOfBirth, address);
 
         traineeRepository.save(trainee);
         LOG.info("Created trainee: {} (id={})", username, trainee.getTraineeId());
-        return trainee;
+        return new TraineeRegistrationResult(trainee, rawPassword);
     }
 
     @Override
@@ -97,7 +104,7 @@ public class TraineeServiceImpl implements TraineeService {
     public boolean authenticate(String username, String password) {
         LOG.debug("Authenticating trainee: {}", username);
         boolean matches = traineeRepository.findByUser_Username(username)
-                .map(t -> t.getUser().getPassword().equals(password))
+                .map(t -> passwordEncoder.matches(password, t.getUser().getPassword()))
                 .orElse(false);
         if (!matches) {
             LOG.warn("Authentication failed for trainee: {}", username);

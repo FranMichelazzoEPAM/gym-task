@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.util.NoSuchElementException;
 
 @Service
@@ -16,9 +18,11 @@ public class UserServiceImpl implements UserService {
     private static final Logger LOG = LoggerFactory.getLogger(UserServiceImpl.class);
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository,  PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -28,12 +32,12 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("User with username " + username + " not found."));
 
-        if (!user.getPassword().equals(oldPassword)) {
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             LOG.error("Password change failed: old password mismatch for {}", username);
             throw new IllegalArgumentException("Old password does not match.");
         }
 
-        user.setPassword(newPassword);
+        user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         LOG.info("Password changed for user: {}", username);
     }
