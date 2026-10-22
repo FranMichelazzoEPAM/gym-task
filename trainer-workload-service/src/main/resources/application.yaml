@@ -4,6 +4,13 @@ server:
 spring:
   application:
     name: trainer-workload-service
+  activemq:
+    broker-url: "tcp://localhost:61616?jms.redeliveryPolicy.maximumRedeliveries=3&jms.redeliveryPolicy.initialRedeliveryDelay=1000&jms.redeliveryPolicy.redeliveryDelay=2000&jms.redeliveryPolicy.useExponentialBackOff=true&jms.redeliveryPolicy.backOffMultiplier=2"
+    user: admin
+    password: admin
+    pool:
+      enabled: true
+      max-connections: 10
 
 eureka:
   client:
@@ -16,6 +23,9 @@ app:
   security:
     jwt:
       secret: "M3JtEzwIGqzdmNz05lxIiTXQfWRqZO85bFPhDUGIWBw="
+  messaging:
+    trainer-workload-queue: trainer.workload.queue
+    trainer-workload-invalid-dlq: trainer.workload.invalid.dlq
 
 logging:
   pattern:

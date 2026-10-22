@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,11 +21,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -42,48 +38,6 @@ class TrainerWorkloadControllerTest {
 
     @MockBean
     private TrainerWorkloadService service;
-
-    @Test
-    void acceptsValidWorkloadWithValidJwt() throws Exception {
-        mockMvc.perform(post("/api/trainers/workload")
-                        .header("Authorization", bearer(validToken()))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "username": "trainer1",
-                                  "firstName": "First",
-                                  "lastName": "Last",
-                                  "isActive": true,
-                                  "trainingDate": "2025-03-10",
-                                  "trainingDuration": 1.5,
-                                  "actionType": "ADD"
-                                }
-                                """))
-                .andExpect(status().isOk());
-
-        verify(service).processWorkload(any());
-    }
-
-    @Test
-    void rejectsInvalidWorkloadWithBadRequest() throws Exception {
-        mockMvc.perform(post("/api/trainers/workload")
-                        .header("Authorization", bearer(validToken()))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "username": "",
-                                  "firstName": "",
-                                  "lastName": "Last",
-                                  "isActive": true,
-                                  "trainingDate": "2025-03-10",
-                                  "trainingDuration": 0,
-                                  "actionType": "ADD"
-                                }
-                                """))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").isNotEmpty());
-    }
 
     @Test
     void returnsMonthlySummary() throws Exception {

@@ -26,7 +26,7 @@ class TrainerWorkloadServiceApplicationTests {
 		mockMvc.perform(get("/v3/api-docs"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.info.title").value("Trainer Workload Service API"))
-				.andExpect(jsonPath("$.paths['/api/trainers/workload'].post").exists())
+				.andExpect(jsonPath("$.paths['/api/trainers/{username}/workload/{year}/{month}'].get").exists())
 				.andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"));
 
 		mockMvc.perform(get("/swagger-ui/index.html"))
