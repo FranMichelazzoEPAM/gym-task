@@ -13,10 +13,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.MDC;
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -56,11 +59,16 @@ class TrainerWorkloadConsumerTest {
     @Test
     void processesValidWorkloadRequest() {
         TrainerWorkloadRequest request = validRequest();
+        org.mockito.Mockito.doAnswer(invocation -> {
+            assertEquals("tx-123", MDC.get("transactionId"));
+            return null;
+        }).when(service).processWorkload(request);
 
-        consumer.onMessage(request);
+        consumer.onMessage(request, "tx-123");
 
         verify(service).processWorkload(request);
         verifyNoInteractions(deadLetterPublisher);
+        assertNull(MDC.get("transactionId"));
     }
 
     @Test
@@ -74,10 +82,10 @@ class TrainerWorkloadConsumerTest {
                 1.5,
                 ActionType.ADD);
 
-        consumer.onMessage(request);
+        consumer.onMessage(request, "tx-invalid");
 
         verify(deadLetterPublisher).publish(eq(request), argThat(errors ->
-                errors.stream().anyMatch(error -> error.startsWith("username:"))));
+                errors.stream().anyMatch(error -> error.startsWith("username:"))), eq("tx-invalid"));
         verifyNoInteractions(service);
     }
 
@@ -87,7 +95,7 @@ class TrainerWorkloadConsumerTest {
         RuntimeException processingFailure = new IllegalStateException("processing failed");
         doThrow(processingFailure).when(service).processWorkload(request);
 
-        assertThrows(IllegalStateException.class, () -> consumer.onMessage(request));
+        assertThrows(IllegalStateException.class, () -> consumer.onMessage(request, "tx-failure"));
 
         verify(service).processWorkload(request);
         verifyNoInteractions(deadLetterPublisher);

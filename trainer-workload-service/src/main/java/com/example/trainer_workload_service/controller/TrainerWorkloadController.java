@@ -1,5 +1,6 @@
 package com.example.trainer_workload_service.controller;
 
+import com.example.trainer_workload_service.domain.TrainerWorkload;
 import com.example.trainer_workload_service.dto.MonthlyWorkloadResponse;
 import com.example.trainer_workload_service.service.TrainerWorkloadService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,5 +26,12 @@ public class TrainerWorkloadController {
             @PathVariable int year,
             @PathVariable int month) {
         return ResponseEntity.ok(service.getMonthlySummary(username, year, month));
+    }
+
+    @GetMapping("/{username}/workload")
+    @Operation(summary = "Get a trainer's complete workload summary")
+    public ResponseEntity<TrainerWorkload> getTrainerWorkload(
+            @PathVariable String username) {
+        return ResponseEntity.ok(service.getTrainerWorkload(username));
     }
 }

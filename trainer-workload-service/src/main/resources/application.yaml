@@ -2,6 +2,12 @@ server:
     port: 8081
 
 spring:
+  profiles:
+    default: local
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/trainer-workload-service}
+      auto-index-creation: true
   application:
     name: trainer-workload-service
   activemq:

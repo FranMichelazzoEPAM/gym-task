@@ -5,25 +5,41 @@ import com.example.trainer_workload_service.domain.TrainerWorkload;
 import com.example.trainer_workload_service.dto.MonthlyWorkloadResponse;
 import com.example.trainer_workload_service.dto.TrainerWorkloadRequest;
 import com.example.trainer_workload_service.exception.TrainerNotFoundException;
-import com.example.trainer_workload_service.repository.InMemoryTrainerWorkloadRepository;
+import com.example.trainer_workload_service.repository.TrainerWorkloadRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class TrainerWorkloadServiceImplTest {
 
-    private InMemoryTrainerWorkloadRepository repository;
+    private TrainerWorkloadRepository repository;
     private TrainerWorkloadServiceImpl service;
+    private Map<String, TrainerWorkload> persistedTrainers;
 
     @BeforeEach
     void setUp() {
-        repository = new InMemoryTrainerWorkloadRepository();
+        repository = mock(TrainerWorkloadRepository.class);
+        persistedTrainers = new HashMap<>();
+        when(repository.findById(anyString())).thenAnswer(invocation ->
+                Optional.ofNullable(persistedTrainers.get(invocation.getArgument(0))));
+        when(repository.save(any(TrainerWorkload.class))).thenAnswer(invocation -> {
+            TrainerWorkload workload = invocation.getArgument(0);
+            persistedTrainers.put(workload.getUsername(), workload);
+            return workload;
+        });
         service = new TrainerWorkloadServiceImpl(repository);
     }
 
@@ -45,7 +61,7 @@ class TrainerWorkloadServiceImplTest {
         service.processWorkload(request("trainer1", "2025-03-10", 2.25, ActionType.ADD));
         service.processWorkload(request("trainer1", "2025-04-10", 1.0, ActionType.ADD));
         service.processWorkload(request("trainer1", "2026-03-10", 3.0, ActionType.ADD));
-        TrainerWorkload trainer = repository.findByUsername("trainer1").orElseThrow();
+        TrainerWorkload trainer = persistedTrainers.get("trainer1");
         trainer.setFirstName("Old");
         trainer.setLastName("Name");
         trainer.setActive(false);
@@ -79,7 +95,7 @@ class TrainerWorkloadServiceImplTest {
     void firstWorkloadCreatesTrainerWithProfileAndWorkload() {
         service.processWorkload(request("trainer1", "2025-03-10", 1.0, ActionType.ADD));
 
-        TrainerWorkload trainer = repository.findByUsername("trainer1").orElseThrow();
+        TrainerWorkload trainer = persistedTrainers.get("trainer1");
         assertEquals("trainer1", trainer.getUsername());
         assertEquals("First", trainer.getFirstName());
         assertEquals("Last", trainer.getLastName());

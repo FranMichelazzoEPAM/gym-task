@@ -22,8 +22,12 @@ public class InvalidMessageDeadLetterPublisher {
         this.dlqName = dlqName;
     }
 
-    public void publish(TrainerWorkloadRequest original, List<String> errors) {
-        InvalidMessageEnvelope envelope = new InvalidMessageEnvelope(original, errors, Instant.now());
-        jmsTemplate.convertAndSend(dlqName, envelope);
+    public void publish(TrainerWorkloadRequest original, List<String> errors, String transactionId) {
+        InvalidMessageEnvelope envelope = new InvalidMessageEnvelope(
+                transactionId, original, errors, Instant.now());
+        jmsTemplate.convertAndSend(dlqName, envelope, message -> {
+            message.setStringProperty("transactionId", transactionId);
+            return message;
+        });
     }
 }

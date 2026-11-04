@@ -5,10 +5,9 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-
-import java.util.Arrays;
 
 @Aspect
 @Component
@@ -19,19 +18,21 @@ public class RestCallLoggingAspect {
     @Around("@within(org.springframework.web.bind.annotation.RestController)")
     public Object logCall(ProceedingJoinPoint pjp) throws Throwable {
         String signature = pjp.getSignature().toShortString();
-        LOG.info("REST call invoked: {} | args={}", signature, Arrays.toString(pjp.getArgs()));
+        long start = System.nanoTime();
+        LOG.info("OPERATION START | transactionId={} method={}", MDC.get("transactionId"), signature);
 
         try {
             Object result = pjp.proceed();
-            if (result instanceof ResponseEntity<?> responseEntity) {
-                LOG.info("REST call completed: {} | status={}, body={}",
-                        signature, responseEntity.getStatusCode(), responseEntity.getBody());
-            } else {
-                LOG.info("REST call completed: {} | response={}", signature, result);
-            }
+            Object status = result instanceof ResponseEntity<?> responseEntity
+                    ? responseEntity.getStatusCode()
+                    : "completed";
+            LOG.info("OPERATION END | transactionId={} method={} status={} durationMs={}",
+                    MDC.get("transactionId"), signature, status, (System.nanoTime() - start) / 1_000_000);
             return result;
         } catch (Exception ex) {
-            LOG.error("REST call failed: {} | error={}", signature, ex.getMessage());
+            LOG.error("OPERATION ERROR | transactionId={} method={} exceptionType={} durationMs={}",
+                    MDC.get("transactionId"), signature, ex.getClass().getSimpleName(),
+                    (System.nanoTime() - start) / 1_000_000);
             throw ex;
         }
     }

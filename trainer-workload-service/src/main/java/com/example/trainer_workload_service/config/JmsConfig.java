@@ -24,7 +24,6 @@ public class JmsConfig {
         converter.setObjectMapper(jmsObjectMapper());
 
         Map<String, Class<?>> typeIdMappings = new HashMap<>();
-        // Same logical key as the main app - that string is the entire contract.
         typeIdMappings.put("trainerWorkloadMessage", TrainerWorkloadRequest.class);
         converter.setTypeIdMappings(typeIdMappings);
 

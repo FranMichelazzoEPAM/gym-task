@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.List;
 
 public record InvalidMessageEnvelope(
+        String transactionId,
         TrainerWorkloadRequest originalMessage,
         List<String> validationErrors,
         Instant failedAt

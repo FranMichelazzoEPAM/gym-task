@@ -23,39 +23,35 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
 
     @Override
     public void processWorkload(TrainerWorkloadRequest request) {
-        TrainerWorkload workload = repository.findOrCreate(
-                request.getUsername(),
-                () -> new TrainerWorkload(
+        TrainerWorkload workload = repository.findById(request.getUsername())
+                .orElseGet(() -> new TrainerWorkload(
                         request.getUsername(),
                         request.getFirstName(),
                         request.getLastName(),
-                        request.getIsActive())
-        );
+                        request.getIsActive()));
 
-        synchronized (workload) {
-            workload.setFirstName(request.getFirstName());
-            workload.setLastName(request.getLastName());
-            workload.setActive(request.getIsActive());
+        workload.setFirstName(request.getFirstName());
+        workload.setLastName(request.getLastName());
+        workload.setActive(request.getIsActive());
 
-            LocalDate date = request.getTrainingDate();
-            YearSummary yearSummary = findOrCreateYear(workload, date.getYear());
-            MonthSummary monthSummary = findOrCreateMonth(yearSummary, date.getMonthValue());
+        LocalDate date = request.getTrainingDate();
+        YearSummary yearSummary = findOrCreateYear(workload, date.getYear());
+        MonthSummary monthSummary = findOrCreateMonth(yearSummary, date.getMonthValue());
 
-            double delta = switch (request.getActionType()) {
-                case ADD -> request.getTrainingDuration();
-                case DELETE -> -request.getTrainingDuration();
-            };
+        double delta = switch (request.getActionType()) {
+            case ADD -> request.getTrainingDuration();
+            case DELETE -> -request.getTrainingDuration();
+        };
 
-            double updated = monthSummary.getTrainingSummaryDuration() + delta;
-            monthSummary.setTrainingSummaryDuration(Math.max(updated, 0.0));
-        }
+        double updated = monthSummary.getTrainingSummaryDuration() + delta;
+        monthSummary.setTrainingSummaryDuration(Math.max(updated, 0.0));
 
         repository.save(workload);
     }
 
     @Override
     public MonthlyWorkloadResponse getMonthlySummary(String username, int year, int month) {
-        TrainerWorkload workload = repository.findByUsername(username)
+        TrainerWorkload workload = repository.findById(username)
                 .orElseThrow(() -> new TrainerNotFoundException(username));
 
         double total = workload.getYears().stream()
@@ -68,6 +64,12 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
                 .orElse(0.0);
 
         return new MonthlyWorkloadResponse(username, year, month, total);
+    }
+
+    @Override
+    public TrainerWorkload getTrainerWorkload(String username) {
+        return repository.findById(username)
+                .orElseThrow(() -> new TrainerNotFoundException(username));
     }
 
     private YearSummary findOrCreateYear(TrainerWorkload workload, int year) {

@@ -1,5 +1,6 @@
 package gym.client;
 
+import gym.client.dto.TrainerWorkloadResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,4 +14,8 @@ public interface TrainerWorkloadQueryClient {
             @PathVariable("username") String username,
             @PathVariable("year") int year,
             @PathVariable("month") int month);
+
+    @GetMapping("/api/trainers/{username}/workload")
+    TrainerWorkloadResponse getTrainerWorkload(
+            @PathVariable("username") String username);
 }

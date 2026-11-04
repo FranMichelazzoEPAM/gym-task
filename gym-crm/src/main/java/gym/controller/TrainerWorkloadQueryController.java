@@ -2,6 +2,7 @@ package gym.controller;
 
 import gym.client.TrainerWorkloadQueryClient;
 import gym.client.dto.MonthlyWorkloadResponse;
+import gym.client.dto.TrainerWorkloadResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,5 +22,11 @@ public class TrainerWorkloadQueryController {
             @PathVariable int year,
             @PathVariable int month) {
         return ResponseEntity.ok(client.getMonthlySummary(username, year, month));
+    }
+
+    @GetMapping("/{username}/workload")
+    public ResponseEntity<TrainerWorkloadResponse> getTrainerWorkload(
+            @PathVariable String username) {
+        return ResponseEntity.ok(client.getTrainerWorkload(username));
     }
 }

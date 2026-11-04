@@ -5,9 +5,8 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
-
-import java.util.Arrays;
 
 @Aspect
 @Component
@@ -17,14 +16,18 @@ public class OperationLoggingAspect {
     @Around("execution(* com.example.trainer_workload_service.service..*(..))")
     public Object logOperation(ProceedingJoinPoint joinPoint) throws Throwable {
         String signature = joinPoint.getSignature().toShortString();
-        log.info("OPERATION START | method={} args={}", signature, Arrays.toString(joinPoint.getArgs()));
+        long start = System.nanoTime();
+        log.info("OPERATION START | transactionId={} method={}", MDC.get("transactionId"), signature);
 
         try {
             Object result = joinPoint.proceed();
-            log.info("OPERATION END | method={} result={}", signature, result);
+            log.info("OPERATION END | transactionId={} method={} durationMs={}",
+                    MDC.get("transactionId"), signature, (System.nanoTime() - start) / 1_000_000);
             return result;
         } catch (Exception ex) {
-            log.error("OPERATION ERROR | method={} message={}", signature, ex.getMessage());
+            log.error("OPERATION ERROR | transactionId={} method={} exceptionType={} durationMs={}",
+                    MDC.get("transactionId"), signature, ex.getClass().getSimpleName(),
+                    (System.nanoTime() - start) / 1_000_000);
             throw ex;
         }
     }
