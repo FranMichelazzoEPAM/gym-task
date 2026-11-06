@@ -1,0 +1,28 @@
+server:
+  port: ${WORKLOAD_PORT:18081}
+
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/trainer-workload-service-integration}
+      auto-index-creation: true
+  application:
+    name: trainer-workload-service
+  activemq:
+    broker-url: ${ACTIVEMQ_URL:tcp://localhost:61616}
+    user: ${ACTIVEMQ_USER:admin}
+    password: ${ACTIVEMQ_PASSWORD:admin}
+    pool:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+app:
+  security:
+    jwt:
+      secret: ${WORKLOAD_JWT_SECRET:gym-workload-integration-secret-key-at-least-32}
+  messaging:
+    trainer-workload-queue: ${WORKLOAD_QUEUE:trainer.workload.integration}
+    trainer-workload-invalid-dlq: ${WORKLOAD_DLQ:trainer.workload.invalid.integration}

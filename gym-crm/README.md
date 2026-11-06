@@ -89,3 +89,19 @@ I changed it now so it uses the JWT generated in the login endpoint, so it can b
 
 ### ActiveMQ aclaration
 I downloaded ActiveMQ and ran it locally, so the application can connect to it.
+
+## BDD component tests
+
+The Cucumber component suite exercises the REST API through Spring MVC with real services and repositories backed by an isolated H2 database. The trainer workload client and notification publisher are mocked so these scenarios do not require the workload service or ActiveMQ.
+
+Run the Cucumber scenarios with:
+
+```
+mvn -Dtest=CucumberComponentTest test
+```
+
+The scenarios are in `src/test/resources/features`; run the complete test suite with `mvn test`.
+
+## Cross-service integration tests
+
+The opt-in Maven reactor profile starts both services and tests the actual ActiveMQ and REST integration. See the repository-root README for local ActiveMQ/MongoDB prerequisites and the Maven commands for running all or selected tagged scenarios.
