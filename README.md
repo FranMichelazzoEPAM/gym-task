@@ -60,3 +60,21 @@ Doing that, both services start correctly. However, it does not provide end-to-e
 CRM workload notifications are disabled without ActiveMQ.
 The CRM workload-query endpoints require the workload service to be reachable through Eureka or a
 configured direct Feign URL. The workload service's storage-backed endpoints require MongoDB.
+
+## Docker Compose end-to-end stack
+
+The root `docker-compose.yml` runs CRM, the trainer workload service, MongoDB, and ActiveMQ on a
+user-defined Docker network. It keeps Eureka disabled and uses Docker DNS for the Feign, JMS, and
+MongoDB connections.
+
+To start the stack from the repo root run:
+
+```powershell
+docker compose up --build -d
+docker compose ps
+```
+
+MongoDB and ActiveMQ must become healthy before the workload service starts, and the workload
+service must be healthy before CRM starts.
+
+To stop the stack, just run `docker compose down`.

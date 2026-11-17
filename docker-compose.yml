@@ -1,0 +1,93 @@
+services:
+  mongo:
+    image: mongo:7.0.16
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    networks:
+      - gym-network
+
+  activemq:
+    image: apache/activemq-classic:6.1.6
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q ':F0B0 ' /proc/net/tcp || grep -q ':F0B0 ' /proc/net/tcp6"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+    networks:
+      - gym-network
+
+  trainer-workload-service:
+    build:
+      context: ./trainer-workload-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_ENABLED: "false"
+      SPRING_CLOUD_DISCOVERY_ENABLED: "false"
+      SPRING_JMS_LISTENER_AUTO_STARTUP: "true"
+      APP_MESSAGING_ENABLED: "true"
+      MONGODB_URI: mongodb://mongo:27017/trainer-workload-service-docker
+      ACTIVEMQ_URL: tcp://activemq:61616
+      ACTIVEMQ_USER: admin
+      ACTIVEMQ_PASSWORD: admin
+    depends_on:
+      mongo:
+        condition: service_healthy
+      activemq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/v3/api-docs -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    networks:
+      - gym-network
+
+  gym-crm:
+    build:
+      context: ./gym-crm
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_ENABLED: "false"
+      SPRING_CLOUD_DISCOVERY_ENABLED: "false"
+      SPRING_JMS_LISTENER_AUTO_STARTUP: "true"
+      APP_MESSAGING_ENABLED: "true"
+      WORKLOAD_SERVICE_URL: http://trainer-workload-service:8081
+      ACTIVEMQ_URL: tcp://activemq:61616
+      ACTIVEMQ_USER: admin
+      ACTIVEMQ_PASSWORD: admin
+    depends_on:
+      activemq:
+        condition: service_healthy
+      trainer-workload-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/v3/api-docs -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    networks:
+      - gym-network
+
+networks:
+  gym-network:
+    name: gym-task-network
+    driver: bridge
+
+volumes:
+  mongo-data:
