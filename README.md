@@ -25,7 +25,7 @@ The Maven profile builds both apps, starts them on ports `18080` and `18081`, ru
 
 The profile is opt-in and excluded from the default Maven test suites. Select scenarios using their Cucumber tags; for example, run only JMS workload flows with `mvn -Pmicroservice-integration -Dcucumber.filter.tags="@jms" verify`, only security scenarios with `mvn -Pmicroservice-integration -Dcucumber.filter.tags="@security" verify`, or all scenarios tagged `@integration` with `mvn -Pmicroservice-integration -Dcucumber.filter.tags="@integration" verify`. Scenario tags are defined in the feature file.
 
-## Docker sub-task 1 (Under docker-subtask1-1 tag)
+## Docker sub-task 1 (Under docker-subtask-1 tag)
 
 The `gym-crm` and `trainer-workload-service` Dockerfiles build Java 21 images and disable Eureka discovery and application messaging in the containers.
 
