@@ -78,3 +78,18 @@ MongoDB and ActiveMQ must become healthy before the workload service starts, and
 service must be healthy before CRM starts.
 
 To stop the stack, just run `docker compose down`.
+
+## Docker sub-task 3
+To accomplish docker subtask 3: Start a shell in the running Docker containers and check the application logs
+
+You have to run from the repo directory the following command:
+
+```powershell
+docker compose logs -f gym-crm (or trainer-worklaod-service, mongo, activemq)
+```
+
+To open a shell inside a running app container, use:
+
+```powershell
+docker compose exec gym-crm bash (or trainer-workload-service)
+```
