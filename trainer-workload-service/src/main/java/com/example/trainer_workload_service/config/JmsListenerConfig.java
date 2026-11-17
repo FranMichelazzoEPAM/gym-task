@@ -1,6 +1,7 @@
 package com.example.trainer_workload_service.config;
 
 import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
@@ -9,6 +10,7 @@ import org.springframework.jms.support.converter.MessageConverter;
 import jakarta.jms.ConnectionFactory;
 
 @Configuration
+@ConditionalOnProperty(name = "app.messaging.enabled", havingValue = "true", matchIfMissing = true)
 public class JmsListenerConfig {
 
     @Bean

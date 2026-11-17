@@ -24,3 +24,39 @@ mvn -Pmicroservice-integration verify
 The Maven profile builds both apps, starts them on ports `18080` and `18081`, runs the Cucumber integration scenarios, and stops the application processes it started. It uses a temporary H2 database and a run-specific MongoDB database/ActiveMQ queue; the run-specific Mongo database is retained in local MongoDB. Integration features are in `gym-crm/src/test/resources/integration-features`. The existing per-service component Cucumber suites remain independently runnable.
 
 The profile is opt-in and excluded from the default Maven test suites. Select scenarios using their Cucumber tags; for example, run only JMS workload flows with `mvn -Pmicroservice-integration -Dcucumber.filter.tags="@jms" verify`, only security scenarios with `mvn -Pmicroservice-integration -Dcucumber.filter.tags="@security" verify`, or all scenarios tagged `@integration` with `mvn -Pmicroservice-integration -Dcucumber.filter.tags="@integration" verify`. Scenario tags are defined in the feature file.
+
+## Docker sub-task 1 (Under docker-subtask1-1 tag)
+
+The `gym-crm` and `trainer-workload-service` Dockerfiles build Java 21 images and disable Eureka discovery and application messaging in the containers.
+
+Build both images from the repository root:
+
+```powershell
+docker build -t gym-crm:local .\gym-crm
+docker build -t trainer-workload-service:local .\trainer-workload-service
+```
+
+If you want to check the images, run:
+
+```powershell
+docker image ls
+```
+
+Run each command in a separate terminal:
+
+```powershell
+docker run --rm --name gym-crm -p 8080:8080 gym-crm:local
+docker run --rm --name trainer-workload-service -p 8081:8081 trainer-workload-service:local
+```
+
+Check that each HTTP server responds:
+
+```powershell
+curl.exe -f http://localhost:8080/v3/api-docs
+curl.exe -f http://localhost:8081/v3/api-docs
+```
+
+Doing that, both services start correctly. However, it does not provide end-to-end workload behavior.
+CRM workload notifications are disabled without ActiveMQ.
+The CRM workload-query endpoints require the workload service to be reachable through Eureka or a
+configured direct Feign URL. The workload service's storage-backed endpoints require MongoDB.

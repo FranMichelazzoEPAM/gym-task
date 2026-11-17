@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import gym.client.dto.TrainerWorkloadRequest;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
+@ConditionalOnProperty(name = "app.messaging.enabled", havingValue = "true", matchIfMissing = true)
 public class JmsConfig {
 
     @Bean

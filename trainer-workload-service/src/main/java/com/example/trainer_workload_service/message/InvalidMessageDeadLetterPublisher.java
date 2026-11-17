@@ -2,6 +2,7 @@ package com.example.trainer_workload_service.message;
 
 
 import com.example.trainer_workload_service.dto.TrainerWorkloadRequest;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(name = "app.messaging.enabled", havingValue = "true", matchIfMissing = true)
 public class InvalidMessageDeadLetterPublisher {
 
     private final JmsTemplate jmsTemplate;

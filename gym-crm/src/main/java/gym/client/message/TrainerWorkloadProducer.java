@@ -3,6 +3,7 @@ package gym.client.message;
 import gym.logging.TransactionIdFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.JmsException;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
+@ConditionalOnProperty(name = "app.messaging.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
 public class TrainerWorkloadProducer {

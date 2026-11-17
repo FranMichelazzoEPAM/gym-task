@@ -4,6 +4,7 @@ import com.example.trainer_workload_service.dto.TrainerWorkloadRequest;
 import com.example.trainer_workload_service.service.TrainerWorkloadService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component
+@ConditionalOnProperty(name = "app.messaging.enabled", havingValue = "true", matchIfMissing = true)
 public class TrainerWorkloadConsumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(TrainerWorkloadConsumer.class);

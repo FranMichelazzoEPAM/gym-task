@@ -1,6 +1,7 @@
 package gym.client;
 
 import gym.client.dto.TrainerWorkloadRequest;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +12,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
+@ConditionalOnProperty(name = "app.messaging.enabled", havingValue = "true", matchIfMissing = true)
 public class WorkloadNotificationEventListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(WorkloadNotificationEventListener.class);
